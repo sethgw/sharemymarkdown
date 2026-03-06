@@ -75,6 +75,7 @@ export const listDocuments = async (userId: string) => {
       ownerId: documents.ownerId,
       visibility: documents.visibility,
       shareId: documents.shareId,
+      sourcePath: documents.sourcePath,
       updatedAt: documents.updatedAt,
       createdAt: documents.createdAt,
     })
@@ -95,6 +96,7 @@ export const createDocument = async (
   input?: {
     markdown?: string;
     visibility?: DocumentVisibility;
+    sourcePath?: string;
   },
 ) => {
   const now = new Date();
@@ -108,6 +110,7 @@ export const createDocument = async (
     visibility: input?.visibility ?? "unlisted",
     shareId,
     currentMarkdown: input?.markdown ?? "",
+    sourcePath: input?.sourcePath ?? null,
     createdAt: now,
     updatedAt: now,
   });
@@ -132,6 +135,7 @@ export const getDocument = async (userId: string, documentId: string) => {
       ownerId: documents.ownerId,
       visibility: documents.visibility,
       shareId: documents.shareId,
+      sourcePath: documents.sourcePath,
       currentMarkdown: documents.currentMarkdown,
       updatedAt: documents.updatedAt,
       createdAt: documents.createdAt,
@@ -159,6 +163,7 @@ export const getSharedDocument = async (shareId: string, viewerUserId?: string |
       ownerId: documents.ownerId,
       visibility: documents.visibility,
       shareId: documents.shareId,
+      sourcePath: documents.sourcePath,
       currentMarkdown: documents.currentMarkdown,
       updatedAt: documents.updatedAt,
       createdAt: documents.createdAt,

@@ -101,6 +101,7 @@ const statements = [
     visibility TEXT NOT NULL DEFAULT 'unlisted',
     share_id TEXT NOT NULL DEFAULT '',
     current_markdown TEXT NOT NULL DEFAULT '',
+    source_path TEXT,
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
   )`,
@@ -395,6 +396,7 @@ export const ensureDatabase = async () => {
 
   await ensureOauthPluginSchema();
   await ensureDocumentVisibilitySchema();
+  await ensureColumn("documents", "source_path", `ALTER TABLE documents ADD COLUMN source_path TEXT`);
 
   ready = true;
 };

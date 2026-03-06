@@ -114,7 +114,7 @@ type RevisionDetail = RevisionSummary & {
 type McpBackend = {
   authStatus: () => Promise<AuthStatusResult>;
   listDocuments: () => Promise<DocumentSummary[]>;
-  createDocument: (input?: { title?: string; markdown?: string; visibility?: DocumentVisibility }) => Promise<DocumentDetail>;
+  createDocument: (input?: { title?: string; markdown?: string; visibility?: DocumentVisibility; sourcePath?: string }) => Promise<DocumentDetail>;
   getDocument: (documentId: string) => Promise<DocumentDetail>;
   updateDocument: (documentId: string, input: { title?: string; markdown?: string; visibility?: DocumentVisibility }) => Promise<DocumentDetail>;
   listPresence: (documentId: string) => Promise<PresenceSummary[]>;
@@ -301,6 +301,7 @@ export const createRemoteMcpBackend: BackendFactory = async extra => {
       const documentId = await createDocument(auth.userId, input?.title ?? "", {
         markdown: input?.markdown,
         visibility: input?.visibility,
+        sourcePath: input?.sourcePath,
       });
       const document = await getDocument(auth.userId, documentId);
       return {

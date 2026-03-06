@@ -40,6 +40,7 @@ type DocumentDetail = {
   visibility: DocumentVisibility;
   shareId: string;
   sharePath: string;
+  sourcePath: string | null;
   shareUrl?: string;
 };
 
@@ -455,9 +456,10 @@ const shareDocumentCli = async (input: string[]) => {
   const visibility = parseVisibility(getOptionString(parsed, ["visibility", "v"]), config.defaultVisibility ?? "unlisted");
   const markdown = await loadMarkdownInput(sourcePath);
   const title = deriveTitle(getOptionString(parsed, ["title", "t"]), sourcePath, markdown);
+  const relativePath = sourcePath ? path.relative(process.cwd(), path.resolve(sourcePath)) : undefined;
   const document = await apiFetch<DocumentDetail>("/api/documents", {
     method: "POST",
-    body: JSON.stringify({ title, markdown, visibility }),
+    body: JSON.stringify({ title, markdown, visibility, sourcePath: relativePath }),
   });
   const shareUrl = formatShareUrl(document);
 
@@ -471,6 +473,7 @@ const shareDocumentCli = async (input: string[]) => {
           visibility: document.visibility,
           shareId: document.shareId,
           sharePath: document.sharePath,
+          sourcePath: document.sourcePath,
           shareUrl,
         },
         null,
@@ -644,13 +647,13 @@ const runMemberCommand = async (input: string[]) => {
   throw new Error("Unknown members command");
 };
 
-const SKILL_CONTENT = `# /smm - Share Markdown
+const SKILL_CONTENT = `# /smm - Share My Markdown (markdown)
 
 When the user wants to share something — a plan, draft, notes, summary, or any markdown — use \`smm\` to create a shareable link.
 
 ## How to use
 
-1. Identify what to share: a file they mention, or content from the conversation (a plan, summary, etc.)
+1. Identify what to share: a file they mention, or markdown content from the conversation (a plan, summary, etc.)
 
 2. File:
    \`\`\`bash
@@ -768,10 +771,10 @@ const openSharedDoc = async (input: string) => {
 
 const installSkill = async () => {
   const claudeDir = path.join(os.homedir(), ".claude");
-  const skillsDir = path.join(claudeDir, "skills");
-  const skillPath = path.join(skillsDir, "smm.md");
+  const skillDir = path.join(claudeDir, "skills", "smm");
+  const skillPath = path.join(skillDir, "SKILL.md");
 
-  await mkdir(skillsDir, { recursive: true });
+  await mkdir(skillDir, { recursive: true });
   await writeFile(skillPath, SKILL_CONTENT, "utf8");
 
   console.log(`Installed /smm skill to ${skillPath}`);

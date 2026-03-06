@@ -375,7 +375,7 @@ const server = serve<CollaborationSocketData>({
         }
 
         if (request.method === "POST") {
-          const body = await readJson<{ title?: string; markdown?: string; visibility?: string }>(request);
+          const body = await readJson<{ title?: string; markdown?: string; visibility?: string; sourcePath?: string }>(request);
           const visibility = parseVisibility(body.visibility);
 
           if (body.visibility && visibility === null) {
@@ -385,6 +385,7 @@ const server = serve<CollaborationSocketData>({
           const documentId = await createDocument(session.user.id, body.title ?? "", {
             markdown: body.markdown,
             visibility: visibility ?? undefined,
+            sourcePath: body.sourcePath,
           });
           return json(withShareUrl(request, await getDocument(session.user.id, documentId)), { status: 201 });
         }

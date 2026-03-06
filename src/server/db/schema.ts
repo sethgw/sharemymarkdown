@@ -158,6 +158,7 @@ export const documents = sqliteTable(
     visibility: text("visibility").$type<DocumentVisibility>().notNull().default("unlisted"),
     shareId: text("share_id").notNull(),
     currentMarkdown: text("current_markdown").notNull().default(""),
+    sourcePath: text("source_path"),
     createdAt: timestamp("created_at"),
     updatedAt: timestamp("updated_at"),
   },
