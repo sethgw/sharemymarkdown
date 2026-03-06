@@ -50,11 +50,27 @@ import {
   listRevisions,
   updateRevision,
 } from "@/server/services/revisions";
+import { isProduction } from "@/server/env";
 import index from "./index.html";
 
 await ensureDatabase();
 
 const llmsFile = Bun.file(new URL("../llms.txt", import.meta.url));
+const distDir = new URL("../dist", import.meta.url).pathname;
+
+const serveDistFile = (pathname: string) => {
+  const file = Bun.file(`${distDir}${pathname}`);
+  return new Response(file);
+};
+
+const serveIndex = () => {
+  if (isProduction) {
+    return new Response(Bun.file(`${distDir}/index.html`), {
+      headers: { "content-type": "text/html; charset=utf-8" },
+    });
+  }
+  return undefined;
+};
 
 const json = (data: unknown, init?: ResponseInit) =>
   new Response(JSON.stringify(data), {
@@ -158,7 +174,7 @@ const server = serve<CollaborationSocketData>({
       });
     },
   },
-  routes: {
+  routes: isProduction ? {} : {
     "/": index,
     "/dashboard": index,
     "/documents/*": index,
@@ -170,6 +186,10 @@ const server = serve<CollaborationSocketData>({
     const { pathname } = url;
 
     try {
+      if (isProduction && (pathname.endsWith(".js") || pathname.endsWith(".css") || pathname.endsWith(".svg") || pathname.endsWith(".map"))) {
+        return serveDistFile(pathname);
+      }
+
       if (pathname.startsWith("/api/collab/")) {
         const segments = pathname.split("/").filter(Boolean);
         const documentId = segments[2];
@@ -491,6 +511,10 @@ const server = serve<CollaborationSocketData>({
         if (segments.length === 5 && segments[3] === "members" && request.method === "DELETE") {
           return json(await revokeMember(session.user.id, documentId, segments[4]));
         }
+      }
+
+      if (isProduction && !pathname.startsWith("/api/")) {
+        return serveIndex()!;
       }
 
       return json({ error: "Not found" }, { status: 404 });
