@@ -254,6 +254,11 @@ const server = serve<CollaborationSocketData>({
           name: "ShareMyMarkdown",
           description: "CLI-first collaborative Markdown with realtime editing, versions, revisions, and sharing.",
           url: getBaseUrl(request),
+          cli: {
+            package: "@sharemymarkdown/smm",
+            install: "bun add -g @sharemymarkdown/smm",
+            binary: "smm",
+          },
           capabilities: {
             mcp: {
               endpoint: `${getBaseUrl(request)}/mcp`,

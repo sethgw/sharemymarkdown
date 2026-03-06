@@ -48,8 +48,8 @@ const command = args[0] ?? "share";
 const subcommand = args[1];
 const serverUrl = localClientConfig.serverUrl;
 const visibilityValues = new Set<string>(documentVisibilityValues);
-const productCommand = "sharemymarkdown";
-const aliasCommand = "smm";
+const productCommand = "smm";
+const aliasCommand = "sharemymarkdown";
 
 const envStatus = () => {
   const envKeys = [

@@ -32,15 +32,17 @@ No feature should be invented only inside a web route or React component.
 
 Primary product surface.
 
+Binary: `smm` (installed via `bun add -g @sharemymarkdown/smm`)
+
 Examples:
 
-- `auth login`
-- `docs list`
-- `docs create`
-- `docs edit`
-- `versions list`
-- `versions diff`
-- `share grant`
+- `smm auth login`
+- `smm docs list`
+- `smm docs create`
+- `smm docs edit`
+- `smm versions list`
+- `smm versions diff`
+- `smm members grant`
 
 For V1, the CLI edit workflow can use `$EDITOR` plus sync and version operations. It does not need to imitate a browser UI to achieve feature parity.
 

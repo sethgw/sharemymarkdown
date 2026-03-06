@@ -84,11 +84,10 @@ cd dist-cli
 npm pack --dry-run
 ```
 
-Published CLI shape:
+Published CLI:
 
 ```bash
-bunx sharemymarkdown share draft.md --visibility unlisted
-bun add -g sharemymarkdown
+bun add -g @sharemymarkdown/smm
 smm share draft.md --visibility unlisted
 ```
 
@@ -97,50 +96,50 @@ smm share draft.md --visibility unlisted
 Sign in from the CLI:
 
 ```bash
-sharemymarkdown auth login
+smm auth login
 ```
 
 Create a link from a file or stdin:
 
 ```bash
-sharemymarkdown share draft.md --visibility unlisted
+smm share draft.md --visibility unlisted
 cat draft.md | smm share --title "Working Draft"
 ```
 
 Open and edit an existing document:
 
 ```bash
-sharemymarkdown docs get <document-id>
-sharemymarkdown docs edit <document-id>
-sharemymarkdown docs visibility <document-id> public
+smm docs get <document-id>
+smm docs edit <document-id>
+smm docs visibility <document-id> public
 ```
 
 Save a version:
 
 ```bash
-sharemymarkdown versions save <document-id> "Initial checkpoint"
+smm versions save <document-id> "Initial checkpoint"
 ```
 
 Create and review a revision:
 
 ```bash
-sharemymarkdown revisions create <document-id> "Alternative draft"
-sharemymarkdown revisions edit <document-id> <revision-id>
-sharemymarkdown revisions diff <document-id> <revision-id> live
-sharemymarkdown revisions apply <document-id> <revision-id>
+smm revisions create <document-id> "Alternative draft"
+smm revisions edit <document-id> <revision-id>
+smm revisions diff <document-id> <revision-id> live
+smm revisions apply <document-id> <revision-id>
 ```
 
 Set a default visibility for future shares:
 
 ```bash
-sharemymarkdown config set default-visibility unlisted
-sharemymarkdown config show
+smm config set default-visibility unlisted
+smm config show
 ```
 
 See all CLI commands:
 
 ```bash
-sharemymarkdown help
+smm help
 ```
 
 ## MCP
@@ -184,7 +183,7 @@ High-value endpoints:
 - GitHub is the first auth provider.
 - Use one GitHub OAuth app for local and a separate one for production.
 - CLI defaults live in `~/.config/sharemymarkdown/config.json`.
-- The repo workspace package is private; npm publishing happens from the generated `dist-cli/` package.
+- The repo workspace package is private; npm publishing happens from the generated `dist-cli/` package as `@sharemymarkdown/smm`.
 - `db:push` can hit Turso transaction issues when it tries to recreate existing auth tables. The app also runs `ensureDatabase()` on startup to create missing tables safely.
 
 ## Reference

@@ -67,9 +67,10 @@ bun run mcp
 Binary shape after publish:
 
 ```bash
-bunx sharemymarkdown share draft.md --visibility unlisted
-bun add -g sharemymarkdown
+bun add -g @sharemymarkdown/smm
 smm share draft.md --visibility unlisted
+# long alias also works:
+sharemymarkdown share draft.md --visibility unlisted
 ```
 
 Publish artifact flow:
@@ -78,6 +79,7 @@ Publish artifact flow:
 bun run build:cli-package
 cd dist-cli
 npm pack --dry-run
+npm publish --access public
 ```
 
 Database helpers:

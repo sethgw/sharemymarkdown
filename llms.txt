@@ -69,6 +69,12 @@ Important files:
 - `src/server/collaboration.ts`
 - `src/server/db/schema.ts`
 
+Install CLI:
+```bash
+bun add -g @sharemymarkdown/smm
+smm share draft.md --visibility unlisted
+```
+
 Local development:
 ```bash
 bun install

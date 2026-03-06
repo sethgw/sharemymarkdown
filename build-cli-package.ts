@@ -44,7 +44,7 @@ await chmod(path.join(binDir, "sharemymarkdown"), 0o755);
 await chmod(path.join(binDir, "smm"), 0o755);
 
 const publishPackage = {
-  name: "sharemymarkdown",
+  name: "@sharemymarkdown/smm",
   version: rootPackage.version,
   description: rootPackage.description,
   license: rootPackage.license,
@@ -59,8 +59,8 @@ const publishPackage = {
     bun: ">=1.3.0",
   },
   bin: {
-    sharemymarkdown: "./bin/sharemymarkdown",
     smm: "./bin/smm",
+    sharemymarkdown: "./bin/sharemymarkdown",
   },
   files: ["bin", "dist", "README.md", "AGENTS.md", "llms.txt"],
 };
