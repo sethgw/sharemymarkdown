@@ -1,6 +1,6 @@
 {
   "name": "sharemymarkdown",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI-first collaborative Markdown with realtime editing, share links, and readable revision workflows.",
   "license": "MIT",
   "repository": {
