@@ -11,4 +11,16 @@ services:
       - BETTER_AUTH_URL=${BETTER_AUTH_URL}
       - GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
       - GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.sharemymarkdown.rule=Host(`sharemymarkdown.com`)"
+      - "traefik.http.routers.sharemymarkdown.entrypoints=websecure"
+      - "traefik.http.routers.sharemymarkdown.tls.certresolver=letsencrypt"
+      - "traefik.http.services.sharemymarkdown.loadbalancer.server.port=3000"
+    networks:
+      - dokploy-network
     restart: unless-stopped
+
+networks:
+  dokploy-network:
+    external: true
