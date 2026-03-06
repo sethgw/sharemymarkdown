@@ -5,7 +5,8 @@ import * as z from "zod/v4";
 import { listDocumentPresence } from "@/server/collaboration";
 import { apiFetch, readSessionToken } from "@/local/client";
 import { db } from "@/server/db/client";
-import { type DocumentVisibility, user } from "@/server/db/schema";
+import { user } from "@/server/db/schema";
+import { type DocumentVisibility } from "@/shared/document-visibility";
 import {
   createDocument,
   createVersion,
@@ -401,7 +402,7 @@ export const createRemoteMcpBackend: BackendFactory = async extra => {
 export const createAppMcpServer = (getBackend: BackendFactory) => {
   const server = new McpServer({
     name: "sharemymarkdown",
-    version: "0.1.0",
+    version: "0.1.1",
   });
 
   server.registerTool(

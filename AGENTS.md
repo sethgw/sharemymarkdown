@@ -27,6 +27,8 @@ Do not invent product behavior only inside React components or HTTP handlers.
 ## Important Paths
 
 - `src/index.ts`: Bun server, HTTP routes, websocket upgrades
+- `src/cli.ts`: CLI surface
+- `build-cli-package.ts`: generates the minimal publishable npm package in `dist-cli/`
 - `src/mcp/server.ts`: MCP tool surface
 - `src/server/services/documents.ts`: document, version, sharing services
 - `src/server/services/revisions.ts`: draft and revision services
@@ -58,6 +60,7 @@ bun install
 bun run cli -- help
 bun dev
 bun run build
+bun run build:cli-package
 bun run mcp
 ```
 
@@ -67,6 +70,14 @@ Binary shape after publish:
 bunx sharemymarkdown share draft.md --visibility unlisted
 bun add -g sharemymarkdown
 smm share draft.md --visibility unlisted
+```
+
+Publish artifact flow:
+
+```bash
+bun run build:cli-package
+cd dist-cli
+npm pack --dry-run
 ```
 
 Database helpers:
@@ -99,6 +110,7 @@ http://localhost:3000/api/auth/callback/github
 - Prefer Bun-native workflows over Node/Vite alternatives.
 - Keep CLI, MCP, and web capability parity aligned.
 - Keep share-link and visibility semantics aligned across all three surfaces.
+- Keep the published CLI package minimal; avoid pulling web/server-only dependencies into the npm artifact.
 - Treat Yjs as the source of truth for live editor state.
 - Treat HTTP services and DB records as the source of truth for revisions, versions, sharing, and auth.
 - Prefer markdown and text representations when building agent-facing output.

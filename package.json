@@ -1,6 +1,6 @@
 {
   "name": "sharemymarkdown",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI-first collaborative Markdown with realtime editing, share links, and readable revision workflows.",
   "license": "MIT",
   "repository": {
@@ -11,6 +11,7 @@
   "bugs": {
     "url": "https://github.com/sethgw/sharemymarkdown/issues"
   },
+  "private": true,
   "type": "module",
   "bin": {
     "sharemymarkdown": "./bin/sharemymarkdown",
@@ -31,6 +32,7 @@
     "dev": "bun --watch src/index.ts",
     "start": "NODE_ENV=production bun src/index.ts",
     "build": "bun run build.ts",
+    "build:cli-package": "bun run build-cli-package.ts",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"

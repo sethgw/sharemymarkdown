@@ -1,5 +1,6 @@
 import { serve } from "bun";
 
+import { documentVisibilityValues, isDocumentVisibility, type DocumentVisibility } from "@/shared/document-visibility";
 import { auth } from "@/server/auth";
 import {
   attachCollaborationSocket,
@@ -40,7 +41,6 @@ import {
   revokeMember,
   updateDocument,
 } from "@/server/services/documents";
-import { documentVisibilityValues, type DocumentVisibility } from "@/server/db/schema";
 import { completeCliLogin, consumeCliLogin, startCliLogin } from "@/server/services/cli-login";
 import {
   applyRevision,
@@ -88,9 +88,6 @@ const readJson = async <T>(request: Request) => {
 const getBaseUrl = (request: Request) => {
   return new URL(request.url).origin;
 };
-
-const isDocumentVisibility = (value: string): value is DocumentVisibility =>
-  documentVisibilityValues.includes(value as DocumentVisibility);
 
 const parseVisibility = (value: unknown) => {
   if (typeof value !== "string") {

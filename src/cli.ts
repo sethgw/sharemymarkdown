@@ -12,7 +12,7 @@ import {
   saveLocalCliConfig,
   saveSessionToken,
 } from "@/local/client";
-import { documentVisibilityValues, type DocumentVisibility } from "@/server/db/schema";
+import { documentVisibilityValues, type DocumentVisibility } from "@/shared/document-visibility";
 
 type ParsedCliArgs = {
   positionals: string[];

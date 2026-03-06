@@ -1,12 +1,11 @@
 import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { documentVisibilityValues, type DocumentVisibility } from "@/shared/document-visibility";
 
 export const roleValues = ["owner", "editor", "viewer"] as const;
 export const revisionStatusValues = ["draft", "review", "applied"] as const;
-export const documentVisibilityValues = ["private", "unlisted", "public"] as const;
 
 export type Role = (typeof roleValues)[number];
 export type RevisionStatus = (typeof revisionStatusValues)[number];
-export type DocumentVisibility = (typeof documentVisibilityValues)[number];
 
 const timestamp = (name: string) => integer(name, { mode: "timestamp_ms" }).notNull();
 const optionalTimestamp = (name: string) => integer(name, { mode: "timestamp_ms" });

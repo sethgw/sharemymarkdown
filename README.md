@@ -76,6 +76,14 @@ Local CLI during repo development:
 bun run cli -- help
 ```
 
+Prepare the lean npm CLI package locally:
+
+```bash
+bun run build:cli-package
+cd dist-cli
+npm pack --dry-run
+```
+
 Published CLI shape:
 
 ```bash
@@ -176,6 +184,7 @@ High-value endpoints:
 - GitHub is the first auth provider.
 - Use one GitHub OAuth app for local and a separate one for production.
 - CLI defaults live in `~/.config/sharemymarkdown/config.json`.
+- The repo workspace package is private; npm publishing happens from the generated `dist-cli/` package.
 - `db:push` can hit Turso transaction issues when it tries to recreate existing auth tables. The app also runs `ensureDatabase()` on startup to create missing tables safely.
 
 ## Reference

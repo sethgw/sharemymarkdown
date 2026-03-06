@@ -1,7 +1,7 @@
 import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
-import type { DocumentVisibility } from "@/server/db/schema";
+import type { DocumentVisibility } from "@/shared/document-visibility";
 import { env } from "@/server/env";
 
 const serverUrl = env.cliServerUrl.replace(/\/$/, "");
