@@ -111,7 +111,11 @@ const printHelp = () => {
   console.log(`  ${productCommand} members revoke <document-id> <user-id>`);
   console.log(`  ${productCommand} config show`);
   console.log(`  ${productCommand} config set default-visibility <private|unlisted|public>`);
+  console.log(`  ${productCommand} open <share-url-or-id>`);
   console.log(`  ${productCommand} install-skill`);
+  console.log("");
+  console.log("Pipe into Claude Code:");
+  console.log(`  ${productCommand} open <share-url> | claude`);
   console.log("");
   console.log("Developer shortcut:");
   console.log("  bun run cli -- <command>");
@@ -695,6 +699,22 @@ smm config set default-visibility unlisted
 \`\`\`
 `;
 
+const openSharedDoc = async (input: string) => {
+  // Accept a full URL like https://sharemymarkdown.com/d/abc123 or just the shareId
+  const shareId = input.replace(/.*\/d\//, "").replace(/[/?#].*$/, "");
+  if (!shareId) {
+    throw new Error("Usage: smm open <share-url-or-id>");
+  }
+
+  const document = await apiFetch<{ title: string; currentMarkdown: string }>(
+    `/api/shared/${encodeURIComponent(shareId)}`,
+    undefined,
+    false,
+  );
+
+  console.log(document.currentMarkdown);
+};
+
 const installSkill = async () => {
   const claudeDir = path.join(os.homedir(), ".claude");
   const skillsDir = path.join(claudeDir, "skills");
@@ -801,6 +821,10 @@ const run = async () => {
       if (subcommand === "show") return showConfig();
       if (subcommand === "set") return setConfig(args[2], args[3]);
       break;
+    }
+    case "open": {
+      if (!subcommand) throw new Error("Usage: smm open <share-url-or-id>");
+      return openSharedDoc(subcommand);
     }
     case "install-skill": {
       return installSkill();

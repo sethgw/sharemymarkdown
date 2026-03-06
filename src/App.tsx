@@ -1324,6 +1324,27 @@ function SharedDocumentStandalone({
           className="markdown-body prose prose-stone mx-auto max-w-3xl text-[15px] leading-7"
           dangerouslySetInnerHTML={{ __html: previewHtml }}
         />
+        <div className="mt-10 rounded-xl border border-stone-200 bg-stone-50/60 p-5">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">Continue in Claude Code</p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 rounded-md bg-stone-900 px-3 py-2 font-mono text-sm text-stone-100">
+              smm open {window.location.origin}/d/{shareId} | claude
+            </code>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                void navigator.clipboard.writeText(`smm open ${window.location.origin}/d/${shareId} | claude`);
+              }}
+            >
+              Copy
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-stone-400">
+            Pipes this document into a new Claude Code session.{" "}
+            Install: <code className="text-stone-500">bun add -g @sharemymarkdown/smm</code>
+          </p>
+        </div>
         <footer className="mt-12 flex flex-col items-center gap-3 border-t border-stone-200 pt-6 text-center">
           <p className="text-xs text-stone-400">
             Shared via{" "}
