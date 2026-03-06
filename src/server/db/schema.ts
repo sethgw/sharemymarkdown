@@ -2,9 +2,11 @@ import { index, integer, primaryKey, sqliteTable, text, uniqueIndex } from "driz
 
 export const roleValues = ["owner", "editor", "viewer"] as const;
 export const revisionStatusValues = ["draft", "review", "applied"] as const;
+export const documentVisibilityValues = ["private", "unlisted", "public"] as const;
 
 export type Role = (typeof roleValues)[number];
 export type RevisionStatus = (typeof revisionStatusValues)[number];
+export type DocumentVisibility = (typeof documentVisibilityValues)[number];
 
 const timestamp = (name: string) => integer(name, { mode: "timestamp_ms" }).notNull();
 const optionalTimestamp = (name: string) => integer(name, { mode: "timestamp_ms" });
@@ -154,11 +156,17 @@ export const documents = sqliteTable(
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    visibility: text("visibility").$type<DocumentVisibility>().notNull().default("private"),
+    shareId: text("share_id").notNull(),
     currentMarkdown: text("current_markdown").notNull().default(""),
     createdAt: timestamp("created_at"),
     updatedAt: timestamp("updated_at"),
   },
-  table => [index("documents_owner_id_idx").on(table.ownerId)],
+  table => [
+    index("documents_owner_id_idx").on(table.ownerId),
+    index("documents_visibility_idx").on(table.visibility),
+    uniqueIndex("documents_share_id_unique").on(table.shareId),
+  ],
 );
 
 export const documentMembers = sqliteTable(

@@ -19,8 +19,11 @@ export const renderDocumentsMarkdown = (
   documents: Array<{
     id: string;
     title: string;
-    role: string;
+    role: string | null;
     updatedAt: Date | string;
+    visibility?: string;
+    sharePath?: string;
+    shareUrl?: string;
   }>,
 ) => {
   if (documents.length === 0) {
@@ -30,23 +33,38 @@ export const renderDocumentsMarkdown = (
   return [
     "# Documents",
     "",
-    ...documents.map(document => `- **${document.title}** \`${document.id}\`  \n  role: ${document.role}  \n  updated: ${new Date(document.updatedAt).toISOString()}`),
+    ...documents.map(document =>
+      [
+        `- **${document.title}** \`${document.id}\``,
+        `  role: ${document.role ?? "shared-read-only"}`,
+        `  visibility: ${document.visibility ?? "private"}`,
+        `  updated: ${new Date(document.updatedAt).toISOString()}`,
+        ...(document.sharePath ? [`  share_path: ${document.sharePath}`] : []),
+        ...(document.shareUrl ? [`  share_url: ${document.shareUrl}`] : []),
+      ].join("  \n"),
+    ),
   ].join("\n");
 };
 
 export const renderDocumentMarkdown = (document: {
   id: string;
   title: string;
-  role: string;
+  role: string | null;
   updatedAt: Date | string;
   currentMarkdown: string;
+  visibility?: string;
+  sharePath?: string;
+  shareUrl?: string;
 }) =>
   [
     `# ${document.title}`,
     "",
     `> document_id: \`${document.id}\``,
-    `> role: ${document.role}`,
+    `> role: ${document.role ?? "shared-read-only"}`,
+    ...(document.visibility ? [`> visibility: ${document.visibility}`] : []),
     `> updated_at: ${new Date(document.updatedAt).toISOString()}`,
+    ...(document.sharePath ? [`> share_path: ${document.sharePath}`] : []),
+    ...(document.shareUrl ? [`> share_url: ${document.shareUrl}`] : []),
     "",
     document.currentMarkdown || "_Empty document._",
   ].join("\n");

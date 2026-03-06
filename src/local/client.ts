@@ -1,6 +1,7 @@
 import { mkdir, rm } from "node:fs/promises";
 import path from "node:path";
 
+import type { DocumentVisibility } from "@/server/db/schema";
 import { env } from "@/server/env";
 
 const serverUrl = env.cliServerUrl.replace(/\/$/, "");
@@ -8,11 +9,17 @@ const sessionDir = process.env.HOME
   ? path.join(process.env.HOME, ".config", "sharemymarkdown")
   : path.join(process.cwd(), ".sharemymarkdown");
 const sessionFile = path.join(sessionDir, "session.json");
+const configFile = path.join(sessionDir, "config.json");
+
+export type LocalCliConfig = {
+  defaultVisibility?: DocumentVisibility;
+};
 
 export const localClientConfig = {
   serverUrl,
   sessionDir,
   sessionFile,
+  configFile,
 };
 
 export const readSessionToken = async () => {
@@ -39,6 +46,24 @@ export const clearSessionToken = async () => {
   }
 };
 
+export const readLocalCliConfig = async (): Promise<LocalCliConfig> => {
+  const file = Bun.file(configFile);
+  if (!(await file.exists())) {
+    return {};
+  }
+
+  try {
+    return (await file.json()) as LocalCliConfig;
+  } catch {
+    return {};
+  }
+};
+
+export const saveLocalCliConfig = async (config: LocalCliConfig) => {
+  await mkdir(sessionDir, { recursive: true });
+  await Bun.write(configFile, JSON.stringify(config, null, 2));
+};
+
 export const apiFetch = async <T,>(pathname: string, init?: RequestInit, authRequired = true): Promise<T> => {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("content-type")) {
@@ -48,7 +73,7 @@ export const apiFetch = async <T,>(pathname: string, init?: RequestInit, authReq
   if (authRequired) {
     const token = await readSessionToken();
     if (!token) {
-      throw new Error("Not logged in. Run `bun run cli auth login` first.");
+      throw new Error("Not logged in. Run `sharemymarkdown auth login` first.");
     }
     headers.set("authorization", `Bearer ${token}`);
   }

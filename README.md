@@ -1,84 +1,151 @@
 # ShareMyMarkdown
 
-CLI-first collaborative Markdown with realtime sync, readable history, and Git-like workflows.
+CLI-first collaborative Markdown with realtime editing, readable history, and draft-style revision workflows.
 
-## Product Rule
+If you are an agent or operator landing in this repo, the practical rule is simple:
 
-The same domain capabilities should be available through:
+- use the CLI first
+- use MCP when you need tool access from an editor or agent runtime
+- use the web app for reading, live collaboration, sharing, and review
+
+Canonical agent guidance lives in [AGENTS.md](/Users/seth/repositories/sharemymarkdown/AGENTS.md). [CLAUDE.md](/Users/seth/repositories/sharemymarkdown/CLAUDE.md) is a symlink to that file.
+
+## What To Do With This Product
+
+Use ShareMyMarkdown when you want to:
+
+- write Markdown collaboratively without giving up plain text
+- keep explicit versions for meaningful checkpoints
+- create isolated revisions before changing the live document
+- let agents interact with the same document system through MCP
+
+The product is designed so the same core actions exist across:
 
 - CLI
 - MCP
 - web
 
-CLI is the primary surface. Web and MCP are adapters over the same application core, not separate products with drift.
+## Quick Start
 
-## Stack
-
-- Bun for the server, API routes, WebSocket collaboration, and CLI runtime
-- React 19 for the browser UI
-- CodeMirror 6 for the web editor
-- Yjs for realtime CRDT syncing and presence
-- Turso / libSQL for metadata, snapshots, and version history
-- Better Auth for sessions, GitHub auth, OAuth, and MCP-compatible auth metadata
-- Drizzle on the 1.0 beta line (`drizzle-orm@beta`, `drizzle-kit@beta`)
-
-## Current State
-
-The repo still started from a Bun + React template, but the architecture has been updated for a CLI-first build. The working blueprint lives in [docs/architecture.md](/Users/seth/repositories/sharemymarkdown/docs/architecture.md).
-
-There is also an initial CLI entrypoint so the repository now reflects the intended primary surface:
-
-```bash
-bun run cli help
-```
-
-Agent-facing repo guidance lives in [AGENTS.md](/Users/seth/repositories/sharemymarkdown/AGENTS.md). `CLAUDE.md` is a symlink to that canonical file to avoid instruction drift.
-
-## Local Dev
+Install dependencies:
 
 ```bash
 bun install
-bun run cli help
+```
+
+Set up your environment:
+
+```bash
+cp .env.example .env
+```
+
+Add these values to `.env`:
+
+```env
+DATABASE_URL=libsql://...
+TURSO_TOKEN=...
+BETTER_AUTH_SECRET=...
+BETTER_AUTH_URL=http://localhost:3000
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+```
+
+For local GitHub auth, use this callback URL in your GitHub OAuth app:
+
+```txt
+http://localhost:3000/api/auth/callback/github
+```
+
+Start the app:
+
+```bash
 bun dev
 ```
 
-## Environment
+Then open:
 
-The scaffold should support:
+```txt
+http://localhost:3000
+```
 
-- `DATABASE_URL`
-- `TURSO_TOKEN`, `TURSO_AUTH_TOKEN`, or `TURBO_TOKEN`
-- `BETTER_AUTH_SECRET`
-- `BETTER_AUTH_URL`
-- `GITHUB_CLIENT_ID`
-- `GITHUB_CLIENT_SECRET`
+## First Useful Commands
 
-GitHub is the recommended first auth provider. For local development, configure the GitHub OAuth callback URL as `http://localhost:3000/api/auth/callback/github`.
+Sign in from the CLI:
+
+```bash
+bun run cli auth login
+```
+
+Create and edit a document:
+
+```bash
+bun run cli docs create "Working Draft"
+bun run cli docs edit <document-id>
+```
+
+Save a version:
+
+```bash
+bun run cli versions save <document-id> "Initial checkpoint"
+```
+
+Create and review a revision:
+
+```bash
+bun run cli revisions create <document-id> "Alternative draft"
+bun run cli revisions edit <document-id> <revision-id>
+bun run cli revisions diff <document-id> <revision-id> live
+bun run cli revisions apply <document-id> <revision-id>
+```
+
+See all CLI commands:
+
+```bash
+bun run cli help
+```
 
 ## MCP
 
-There are now two MCP surfaces backed by the same document/version/share operations:
+There are two MCP entrypoints:
 
-- `bun run mcp` for local stdio usage
-- `http://localhost:3000/mcp` for Streamable HTTP
+- local stdio: `bun run mcp`
+- HTTP: `http://localhost:3000/mcp`
 
-The HTTP MCP endpoint is protected by Better Auth's MCP OAuth flow. The discovery metadata lives at:
+Discovery endpoints:
 
 - `http://localhost:3000/.well-known/oauth-authorization-server`
 - `http://localhost:3000/.well-known/oauth-protected-resource`
 - `http://localhost:3000/llms.txt`
 
-## Agent-Friendly Output
+## Markdown-Friendly Output
 
-Key GET endpoints support markdown output when requested with either:
+Agents should prefer markdown output when reading content.
+
+Key GET endpoints support markdown when you send either:
 
 - `Accept: text/markdown`
 - `?format=markdown`
 - `?format=md`
 
-## Notes
+High-value endpoints:
 
-- Use Bun's native HTML + TSX bundling instead of adding Vite.
-- Keep Drizzle ORM and Drizzle Kit on the same beta build line.
-- For MCP auth, prefer Better Auth's OAuth Provider direction for new work, even though the legacy MCP plugin still exists.
-- Better Auth's GitHub docs call out that the GitHub app needs the `user:email` scope.
+- `/api/documents`
+- `/api/documents/:id`
+- `/api/documents/:id/presence`
+- `/api/documents/:id/versions`
+- `/api/documents/:id/revisions`
+- `/api/documents/:id/revisions/:revisionId`
+- `/api/documents/:id/diff`
+- `/api/documents/:id/revisions/:revisionId/diff`
+- `/api/documents/:id/members`
+
+## Configuration Notes
+
+- GitHub is the first auth provider.
+- Use one GitHub OAuth app for local and a separate one for production.
+- `db:push` can hit Turso transaction issues when it tries to recreate existing auth tables. The app also runs `ensureDatabase()` on startup to create missing tables safely.
+
+## Reference
+
+- Agent instructions: [AGENTS.md](/Users/seth/repositories/sharemymarkdown/AGENTS.md)
+- Architecture blueprint: [docs/architecture.md](/Users/seth/repositories/sharemymarkdown/docs/architecture.md)

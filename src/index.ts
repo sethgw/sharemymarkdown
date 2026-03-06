@@ -31,6 +31,7 @@ import {
   diffVersions,
   ensureAccess,
   getDocument,
+  getSharedDocument,
   grantMember,
   listDocuments,
   listMembers,
@@ -39,6 +40,7 @@ import {
   revokeMember,
   updateDocument,
 } from "@/server/services/documents";
+import { documentVisibilityValues, type DocumentVisibility } from "@/server/db/schema";
 import { completeCliLogin, consumeCliLogin, startCliLogin } from "@/server/services/cli-login";
 import {
   applyRevision,
@@ -70,6 +72,22 @@ const readJson = async <T>(request: Request) => {
 const getBaseUrl = (request: Request) => {
   return new URL(request.url).origin;
 };
+
+const isDocumentVisibility = (value: string): value is DocumentVisibility =>
+  documentVisibilityValues.includes(value as DocumentVisibility);
+
+const parseVisibility = (value: unknown) => {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+
+  return isDocumentVisibility(value) ? value : null;
+};
+
+const withShareUrl = <T extends { sharePath?: string | null }>(request: Request, value: T): T & { shareUrl?: string } => ({
+  ...value,
+  ...(value.sharePath ? { shareUrl: new URL(value.sharePath, getBaseUrl(request)).toString() } : {}),
+});
 
 const represent = (request: Request, url: URL, data: unknown, markdownBody: string, init?: ResponseInit) =>
   wantsMarkdown(request, url) ? markdown(markdownBody, init) : json(data, init);
@@ -145,6 +163,7 @@ const server = serve<CollaborationSocketData>({
     "/dashboard": index,
     "/documents/*": index,
     "/cli/login": index,
+    "/d/*": index,
   },
   async fetch(request, server) {
     const url = new URL(request.url);
@@ -276,14 +295,38 @@ const server = serve<CollaborationSocketData>({
         const session = await requireSession(request);
 
         if (request.method === "GET") {
-          const documents = await listDocuments(session.user.id);
+          const documents = (await listDocuments(session.user.id)).map(document => withShareUrl(request, document));
           return represent(request, url, documents, renderDocumentsMarkdown(documents));
         }
 
         if (request.method === "POST") {
-          const body = await readJson<{ title?: string }>(request);
-          const documentId = await createDocument(session.user.id, body.title ?? "");
-          return json(await getDocument(session.user.id, documentId), { status: 201 });
+          const body = await readJson<{ title?: string; markdown?: string; visibility?: string }>(request);
+          const visibility = parseVisibility(body.visibility);
+
+          if (body.visibility && visibility === null) {
+            return json({ error: `Visibility must be one of: ${documentVisibilityValues.join(", ")}` }, { status: 400 });
+          }
+
+          const documentId = await createDocument(session.user.id, body.title ?? "", {
+            markdown: body.markdown,
+            visibility: visibility ?? undefined,
+          });
+          return json(withShareUrl(request, await getDocument(session.user.id, documentId)), { status: 201 });
+        }
+      }
+
+      if (pathname.startsWith("/api/shared/")) {
+        const segments = pathname.split("/").filter(Boolean);
+        const shareId = segments[2];
+
+        if (!shareId) {
+          return json({ error: "Missing share id" }, { status: 400 });
+        }
+
+        if (segments.length === 3 && request.method === "GET") {
+          const session = await getSessionFromRequest(request);
+          const document = withShareUrl(request, await getSharedDocument(shareId, session?.user.id ?? null));
+          return represent(request, url, document, renderDocumentMarkdown(document));
         }
       }
 
@@ -298,13 +341,27 @@ const server = serve<CollaborationSocketData>({
 
         if (segments.length === 3) {
           if (request.method === "GET") {
-            const document = await getDocument(session.user.id, documentId);
+            const document = withShareUrl(request, await getDocument(session.user.id, documentId));
             return represent(request, url, document, renderDocumentMarkdown(document));
           }
 
           if (request.method === "PATCH") {
-            const body = await readJson<{ title?: string; markdown?: string }>(request);
-            return json(await updateDocument(session.user.id, documentId, body));
+            const body = await readJson<{ title?: string; markdown?: string; visibility?: string }>(request);
+            const visibility = parseVisibility(body.visibility);
+
+            if (body.visibility && visibility === null) {
+              return json({ error: `Visibility must be one of: ${documentVisibilityValues.join(", ")}` }, { status: 400 });
+            }
+
+            return json(
+              withShareUrl(
+                request,
+                await updateDocument(session.user.id, documentId, {
+                  ...body,
+                  visibility: visibility ?? undefined,
+                }),
+              ),
+            );
           }
         }
 
@@ -365,7 +422,7 @@ const server = serve<CollaborationSocketData>({
         }
 
         if (segments.length === 6 && segments[3] === "revisions" && segments[5] === "apply" && request.method === "POST") {
-          return json(await applyRevision(session.user.id, documentId, segments[4]));
+          return json(withShareUrl(request, await applyRevision(session.user.id, documentId, segments[4])));
         }
 
         if (segments.length === 4 && segments[3] === "diff" && request.method === "GET") {
@@ -381,7 +438,7 @@ const server = serve<CollaborationSocketData>({
         }
 
         if (segments.length === 5 && segments[3] === "restore" && request.method === "POST") {
-          return json(await restoreVersion(session.user.id, documentId, segments[4]));
+          return json(withShareUrl(request, await restoreVersion(session.user.id, documentId, segments[4])));
         }
 
         if (segments.length === 4 && segments[3] === "members") {

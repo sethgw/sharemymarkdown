@@ -23,11 +23,17 @@ type SessionPayload = {
   appUrl: string;
 };
 
+type DocumentVisibility = "private" | "unlisted" | "public";
+
 type DocumentSummary = {
   id: string;
   title: string;
   role: string;
   updatedAt: string;
+  visibility: DocumentVisibility;
+  shareId: string;
+  sharePath: string;
+  shareUrl?: string;
 };
 
 type DocumentDetail = {
@@ -37,6 +43,14 @@ type DocumentDetail = {
   currentMarkdown: string;
   updatedAt: string;
   ownerId: string;
+  visibility: DocumentVisibility;
+  shareId: string;
+  sharePath: string;
+  shareUrl?: string;
+};
+
+type SharedDocumentDetail = Omit<DocumentDetail, "role"> & {
+  role: "owner" | "editor" | "viewer" | null;
 };
 
 type Version = {
@@ -109,6 +123,15 @@ const readingStats = (markdown: string) => {
   };
 };
 
+const visibilityCopy: Record<DocumentVisibility, string> = {
+  private: "Only explicit members can open the document.",
+  unlisted: "Anyone with the link can read it, but it stays out of listings.",
+  public: "Anyone can read the document without a private link.",
+};
+
+const getDocumentShareUrl = (document: { shareUrl?: string; sharePath: string }) =>
+  document.shareUrl ?? new URL(document.sharePath, window.location.origin).toString();
+
 const useCurrentPath = () => {
   const [path, setPath] = useState(() => window.location.pathname + window.location.search);
 
@@ -135,40 +158,103 @@ function Landing({ session }: { session: SessionPayload }) {
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_22rem] lg:items-start">
         <Card className="border-stone-200/80 bg-white/85 backdrop-blur">
           <CardHeader>
-            <CardTitle>Ship Tonight Checklist</CardTitle>
-            <CardDescription>GitHub sign-in, document CRUD, versions, sharing, realtime editing, and draft revisions.</CardDescription>
+            <CardTitle>Built For Sharing Drafts Without Losing Context</CardTitle>
+            <CardDescription>
+              Start inside an agent or terminal, choose visibility, and hand around one durable Markdown link instead of pasting text back and forth.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-stone-700">
-            <p>CLI: `bun run cli auth login`, `docs list`, `docs edit`, `versions save`, `revisions create`, `revisions diff`</p>
-            <p>Web: GitHub sign-in, dashboard, live Markdown editor, reading preview, revision drafts, collaborator management</p>
-            <p>MCP: shared tools for documents, version history, sharing, and revision workflows</p>
+          <CardContent className="space-y-6">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
+                <p className="text-sm font-semibold text-stone-900">Agent to link</p>
+                <p className="mt-2 text-sm leading-6 text-stone-600">
+                  Move a draft out of Codex, Claude, Cursor, or your terminal and turn it into a clean shared document.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
+                <p className="text-sm font-semibold text-stone-900">Visibility on purpose</p>
+                <p className="mt-2 text-sm leading-6 text-stone-600">
+                  Decide whether the document should be private, unlisted, or public instead of improvising permissions later.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
+                <p className="text-sm font-semibold text-stone-900">One link, same doc</p>
+                <p className="mt-2 text-sm leading-6 text-stone-600">
+                  Keep the same document moving through CLI, web, and MCP instead of fragmenting the conversation across copies.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-[1.4rem] border border-stone-200 bg-[#fffdf8] p-5">
+              <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Typical Flow</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">1. Draft where you already work</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">
+                    Write inside your agent or local editor first. ShareMyMarkdown should fit into that flow, not replace it.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">2. Run `sharemymarkdown` or `smm`</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">
+                    Choose the visibility you want, publish the draft, and get back a single link that represents the document.
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-stone-900">3. Review through the link</p>
+                  <p className="mt-2 text-sm leading-6 text-stone-600">
+                    Open it in the browser, send it to collaborators, or hand it back to an agent without losing the thread.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[1.4rem] border border-stone-200 bg-stone-950 px-5 py-4 text-stone-100">
+              <p className="text-xs uppercase tracking-[0.18em] text-stone-400">Intended Command Shape</p>
+              <pre className="mt-3 overflow-x-auto text-sm leading-7 text-stone-100">{`sharemymarkdown share draft.md --visibility unlisted
+# alias
+smm share draft.md --visibility unlisted`}</pre>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="border-stone-200/80 bg-stone-950 text-stone-100">
+        <Card className="border-stone-200/80 bg-white/92 shadow-[0_20px_60px_rgba(28,25,23,0.08)]">
           <CardHeader>
-            <CardTitle>{session.user ? `Signed in as ${session.user.name}` : "Sign in with GitHub"}</CardTitle>
-            <CardDescription className="text-stone-400">
+            <CardTitle className="text-stone-950">{session.user ? `Welcome back, ${session.user.name}` : "Sign in to start sharing"}</CardTitle>
+            <CardDescription className="text-stone-600">
               {session.githubConfigured
-                ? "GitHub is configured for this instance."
+                ? "GitHub is the first auth provider for this instance."
                 : "GitHub auth is not configured yet. Add credentials to enable login."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
+            <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-6 text-stone-600">
+              {session.user
+                ? "Your browser session, CLI login, and MCP access all route back to the same account and document set."
+                : "Sign in once, then use the same account for browser reading, CLI sharing, and MCP-driven workflows."}
+            </div>
             {session.user ? (
               <>
-                <Button className="w-full" onClick={() => window.location.assign("/dashboard")}>
+                <Button className="h-11 w-full bg-stone-950 text-white hover:bg-stone-800" onClick={() => window.location.assign("/dashboard")}>
                   Open dashboard
                 </Button>
-                <Button className="w-full" variant="outline" onClick={() => window.location.assign("/auth/signout?callback=/")}>
+                <Button
+                  className="h-11 w-full border-stone-300 bg-white text-stone-900 hover:bg-stone-100"
+                  variant="outline"
+                  onClick={() => window.location.assign("/auth/signout?callback=/")}
+                >
                   Sign out
                 </Button>
               </>
             ) : (
-              <Button className="w-full" disabled={!session.githubConfigured} onClick={() => window.location.assign("/auth/github?callback=/dashboard")}>
+              <Button
+                className="h-11 w-full bg-stone-950 text-white hover:bg-stone-800"
+                disabled={!session.githubConfigured}
+                onClick={() => window.location.assign("/auth/github?callback=/dashboard")}
+              >
                 Continue with GitHub
               </Button>
             )}
@@ -182,6 +268,7 @@ function Landing({ session }: { session: SessionPayload }) {
 function Dashboard({ session }: { session: SessionPayload }) {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [title, setTitle] = useState("");
+  const [visibility, setVisibility] = useState<DocumentVisibility>("private");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -205,7 +292,7 @@ function Dashboard({ session }: { session: SessionPayload }) {
     try {
       const document = await fetchJson<DocumentDetail>("/api/documents", {
         method: "POST",
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title, visibility }),
       });
       window.location.assign(`/documents/${document.id}`);
     } catch (requestError) {
@@ -235,6 +322,15 @@ function Dashboard({ session }: { session: SessionPayload }) {
         </CardHeader>
         <CardContent className="flex flex-col gap-3 sm:flex-row">
           <Input placeholder="Untitled design doc" value={title} onChange={event => setTitle(event.target.value)} />
+          <select
+            className="h-10 rounded-md border border-stone-200 bg-white px-3 text-sm"
+            value={visibility}
+            onChange={event => setVisibility(event.target.value as DocumentVisibility)}
+          >
+            <option value="private">private</option>
+            <option value="unlisted">unlisted</option>
+            <option value="public">public</option>
+          </select>
           <Button onClick={() => void createNewDocument()}>Create</Button>
         </CardContent>
       </Card>
@@ -256,7 +352,7 @@ function Dashboard({ session }: { session: SessionPayload }) {
               <span>
                 <span className="block font-medium text-stone-900">{document.title}</span>
                 <span className="mt-1 block text-sm text-stone-600">
-                  {document.role} • updated {formatDate(document.updatedAt)}
+                  {document.role} • {document.visibility} • updated {formatDate(document.updatedAt)}
                 </span>
               </span>
               <span className="text-sm text-stone-500">{document.id.slice(0, 8)}</span>
@@ -295,6 +391,7 @@ function DocumentPage({
   const canWrite = document?.role === "owner" || document?.role === "editor";
   const canManageSharing = document?.ownerId === session.user?.id;
   const isRevisionOwner = selectedRevision?.authorId === session.user?.id || document?.ownerId === session.user?.id;
+  const shareUrl = document ? getDocumentShareUrl(document) : "";
 
   const loadChrome = async (preserveRevisionId?: string | null) => {
     const [versionsResponse, revisionsResponse, membersResponse, presenceResponse] = await Promise.all([
@@ -393,6 +490,28 @@ function DocumentPage({
       await loadChrome(selectedRevisionId);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to save version");
+    }
+  };
+
+  const updateVisibility = async (nextVisibility: DocumentVisibility) => {
+    try {
+      const response = await fetchJson<DocumentDetail>(`/api/documents/${documentId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ visibility: nextVisibility }),
+      });
+      setDocument(response);
+      setError(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to update visibility");
+    }
+  };
+
+  const copyShareUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setError(null);
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to copy the share link");
     }
   };
 
@@ -538,6 +657,7 @@ function DocumentPage({
           <h1 className="text-4xl font-semibold tracking-tight text-stone-900">{document.title}</h1>
           <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-stone-500">
             <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{document.role}</span>
+            <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{document.visibility}</span>
             <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{editorStatus}</span>
             <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{presence.length} active</span>
             <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">Updated {formatDate(document.updatedAt)}</span>
@@ -829,9 +949,41 @@ function DocumentPage({
           <Card className="border-stone-200/80 bg-white/80">
             <CardHeader>
               <CardTitle>Sharing</CardTitle>
-              <CardDescription>Owners can add editors and viewers by email.</CardDescription>
+              <CardDescription>Owners can tune visibility, copy the stable share link, and add editors or viewers by email.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Share Link</p>
+                <div className="mt-3 flex flex-col gap-3">
+                  <Input value={shareUrl} readOnly />
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={() => void copyShareUrl()}>
+                      Copy link
+                    </Button>
+                    <Button variant="outline" onClick={() => window.open(shareUrl, "_blank", "noopener,noreferrer")}>
+                      Open shared page
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Visibility</p>
+                <div className="mt-3 flex flex-col gap-3">
+                  <select
+                    className="h-10 w-full rounded-md border border-stone-200 bg-white px-3 text-sm"
+                    value={document.visibility}
+                    disabled={!canManageSharing}
+                    onChange={event => void updateVisibility(event.target.value as DocumentVisibility)}
+                  >
+                    <option value="private">private</option>
+                    <option value="unlisted">unlisted</option>
+                    <option value="public">public</option>
+                  </select>
+                  <p className="text-sm leading-6 text-stone-600">{visibilityCopy[document.visibility]}</p>
+                </div>
+              </div>
+
               <Input
                 placeholder="teammate@example.com"
                 value={shareEmail}
@@ -867,6 +1019,133 @@ function DocumentPage({
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SharedDocumentPage({
+  shareId,
+  session,
+}: {
+  shareId: string;
+  session: SessionPayload;
+}) {
+  const [document, setDocument] = useState<SharedDocumentDetail | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchJson<SharedDocumentDetail>(`/api/shared/${shareId}`)
+      .then(response => {
+        setDocument(response);
+        setError(null);
+      })
+      .catch(requestError => {
+        setError(requestError instanceof Error ? requestError.message : "Unable to load shared document");
+      });
+  }, [shareId, session.user?.id]);
+
+  const deferredMarkdown = useDeferredValue(document?.currentMarkdown ?? "");
+  const previewHtml = useMemo(() => renderMarkdown(deferredMarkdown), [deferredMarkdown]);
+  const stats = useMemo(() => readingStats(document?.currentMarkdown ?? ""), [document?.currentMarkdown]);
+
+  if (!document) {
+    return (
+      <div className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center px-6">
+        <Card className="w-full border-stone-200/80 bg-white/85">
+          <CardHeader>
+            <CardTitle>Shared document</CardTitle>
+            <CardDescription>{error ?? "Loading the reading view."}</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
+  const shareUrl = getDocumentShareUrl(document);
+  const signInCallback = encodeURIComponent(window.location.pathname + window.location.search);
+
+  return (
+    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col gap-6 px-6 py-10">
+      <header className="flex flex-col gap-4 border-b border-stone-200 pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-3">
+          <p className="text-sm uppercase tracking-[0.22em] text-stone-500">Shared Document</p>
+          <h1 className="text-4xl font-semibold tracking-tight text-stone-900">{document.title}</h1>
+          <div className="flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-stone-500">
+            <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{document.visibility}</span>
+            <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{stats.words} words</span>
+            <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">{stats.readingMinutes} min read</span>
+            <span className="rounded-full border border-stone-200 bg-white/70 px-3 py-1">Updated {formatDate(document.updatedAt)}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {document.role ? (
+            <Button onClick={() => window.location.assign(`/documents/${document.id}`)}>Open workspace</Button>
+          ) : session.user ? (
+            <div className="max-w-sm rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm leading-6 text-stone-600">
+              You can read this document through the link. Ask the owner for viewer or editor access if you need the live workspace.
+            </div>
+          ) : (
+            <Button
+              disabled={!session.githubConfigured}
+              onClick={() => window.location.assign(`/auth/github?callback=${signInCallback}`)}
+            >
+              Sign in to collaborate
+            </Button>
+          )}
+        </div>
+      </header>
+
+      {error ? <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
+
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+        <Card className="border-stone-200/80 bg-white/85">
+          <CardHeader>
+            <CardTitle>Reading View</CardTitle>
+            <CardDescription>Shared links resolve to a reading-first page so the Markdown stays easy to review.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <article
+              className="markdown-body prose prose-stone max-w-none text-[15px] leading-7"
+              dangerouslySetInnerHTML={{ __html: previewHtml }}
+            />
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card className="border-stone-200/80 bg-white/85">
+            <CardHeader>
+              <CardTitle>Link details</CardTitle>
+              <CardDescription>{visibilityCopy[document.visibility]}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Input value={shareUrl} readOnly />
+              <Button
+                variant="outline"
+                onClick={() =>
+                  navigator.clipboard.writeText(shareUrl).catch(() => {
+                    setError("Unable to copy the share link");
+                  })
+                }
+              >
+                Copy link
+              </Button>
+              {document.role ? (
+                <p className="text-sm leading-6 text-stone-600">You already have {document.role} access on this document.</p>
+              ) : null}
+            </CardContent>
+          </Card>
+
+          <Card className="border-stone-200/80 bg-white/85">
+            <CardHeader>
+              <CardTitle>Markdown</CardTitle>
+              <CardDescription>Useful when you need to move the exact text back into an agent or editor.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea className="min-h-[22rem] font-mono text-sm" readOnly value={document.currentMarkdown} />
             </CardContent>
           </Card>
         </div>
@@ -948,6 +1227,13 @@ export function App() {
       };
     }
 
+    if (url.pathname.startsWith("/d/")) {
+      return {
+        type: "shared-document" as const,
+        shareId: url.pathname.split("/")[2] ?? null,
+      };
+    }
+
     if (url.pathname === "/dashboard") {
       return {
         type: "dashboard" as const,
@@ -990,6 +1276,10 @@ export function App() {
     }
 
     return <DocumentPage documentId={route.documentId} session={session} />;
+  }
+
+  if (route.type === "shared-document" && route.shareId) {
+    return <SharedDocumentPage shareId={route.shareId} session={session} />;
   }
 
   if (route.type === "cli-login") {

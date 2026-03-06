@@ -98,6 +98,8 @@ const statements = [
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    visibility TEXT NOT NULL DEFAULT 'private',
+    share_id TEXT NOT NULL DEFAULT '',
     current_markdown TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL,
     updated_at INTEGER NOT NULL
@@ -166,6 +168,13 @@ const getTableInfo = async (tableName: string) => {
     name: String(row.name),
     notNull: Number(row.notnull) === 1,
   }));
+};
+
+const ensureColumn = async (tableName: string, columnName: string, statement: string) => {
+  const columns = await getTableInfo(tableName);
+  if (!columns.some(column => column.name === columnName)) {
+    await libsql.execute(statement);
+  }
 };
 
 const rebuildOauthApplicationsTable = async () => {
@@ -338,6 +347,45 @@ const ensureOauthPluginSchema = async () => {
   }
 };
 
+const createShareId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+
+const ensureDocumentVisibilitySchema = async () => {
+  await ensureColumn("documents", "visibility", `ALTER TABLE documents ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private'`);
+  await ensureColumn("documents", "share_id", `ALTER TABLE documents ADD COLUMN share_id TEXT NOT NULL DEFAULT ''`);
+
+  const documentsWithoutShareIds = await libsql.execute(`
+    SELECT id
+    FROM documents
+    WHERE share_id = '' OR share_id IS NULL
+  `);
+
+  for (const row of documentsWithoutShareIds.rows) {
+    const documentId = String(row.id);
+    let shareId = createShareId();
+
+    for (;;) {
+      const existing = await libsql.execute({
+        sql: `SELECT id FROM documents WHERE share_id = ? LIMIT 1`,
+        args: [shareId],
+      });
+
+      if (existing.rows.length === 0) {
+        break;
+      }
+
+      shareId = createShareId();
+    }
+
+    await libsql.execute({
+      sql: `UPDATE documents SET share_id = ? WHERE id = ?`,
+      args: [shareId, documentId],
+    });
+  }
+
+  await libsql.execute(`CREATE INDEX IF NOT EXISTS documents_visibility_idx ON documents(visibility)`);
+  await libsql.execute(`CREATE UNIQUE INDEX IF NOT EXISTS documents_share_id_unique ON documents(share_id)`);
+};
+
 export const ensureDatabase = async () => {
   if (ready) return;
 
@@ -346,6 +394,7 @@ export const ensureDatabase = async () => {
   }
 
   await ensureOauthPluginSchema();
+  await ensureDocumentVisibilitySchema();
 
   ready = true;
 };

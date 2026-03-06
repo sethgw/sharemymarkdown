@@ -3,7 +3,7 @@ import { createPatch } from "diff";
 
 import { replaceCollaborationMarkdownIfRoomActive } from "@/server/collaboration";
 import { db } from "@/server/db/client";
-import { documentMembers, documents, user, versions } from "@/server/db/schema";
+import { documentMembers, documents, type DocumentVisibility, user, versions } from "@/server/db/schema";
 
 type AccessLevel = "read" | "write" | "owner";
 
@@ -13,44 +13,68 @@ const roleRank = {
   owner: 3,
 } as const;
 
-export const ensureAccess = async (userId: string, documentId: string, level: AccessLevel) => {
+const jsonError = (status: number, error: string) =>
+  new Response(JSON.stringify({ error }), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
+
+const createShareId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+
+export const getSharePath = (shareId: string) => `/d/${shareId}`;
+
+const generateShareId = async () => {
+  for (;;) {
+    const shareId = createShareId();
+    const [existing] = await db.select({ id: documents.id }).from(documents).where(eq(documents.shareId, shareId)).limit(1);
+    if (!existing) {
+      return shareId;
+    }
+  }
+};
+
+const getMembership = async (userId: string, documentId: string) => {
   const [membership] = await db
     .select({
       role: documentMembers.role,
       title: documents.title,
       ownerId: documents.ownerId,
+      visibility: documents.visibility,
+      shareId: documents.shareId,
     })
     .from(documentMembers)
     .innerJoin(documents, eq(documents.id, documentMembers.documentId))
     .where(and(eq(documentMembers.documentId, documentId), eq(documentMembers.userId, userId)))
     .limit(1);
 
+  return membership ?? null;
+};
+
+export const ensureAccess = async (userId: string, documentId: string, level: AccessLevel) => {
+  const membership = await getMembership(userId, documentId);
+
   if (!membership) {
-    throw new Response(JSON.stringify({ error: "Document not found" }), {
-      status: 404,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(404, "Document not found");
   }
 
   const requiredRank = level === "read" ? 1 : level === "write" ? 2 : 3;
 
   if (roleRank[membership.role] < requiredRank) {
-    throw new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(403, "Forbidden");
   }
 
   return membership;
 };
 
 export const listDocuments = async (userId: string) => {
-  return db
+  const rows = await db
     .select({
       id: documents.id,
       title: documents.title,
       role: documentMembers.role,
       ownerId: documents.ownerId,
+      visibility: documents.visibility,
+      shareId: documents.shareId,
       updatedAt: documents.updatedAt,
       createdAt: documents.createdAt,
     })
@@ -58,17 +82,32 @@ export const listDocuments = async (userId: string) => {
     .innerJoin(documents, eq(documents.id, documentMembers.documentId))
     .where(eq(documentMembers.userId, userId))
     .orderBy(desc(documents.updatedAt));
+
+  return rows.map(document => ({
+    ...document,
+    sharePath: getSharePath(document.shareId),
+  }));
 };
 
-export const createDocument = async (userId: string, title: string) => {
+export const createDocument = async (
+  userId: string,
+  title: string,
+  input?: {
+    markdown?: string;
+    visibility?: DocumentVisibility;
+  },
+) => {
   const now = new Date();
   const documentId = crypto.randomUUID();
+  const shareId = await generateShareId();
 
   await db.insert(documents).values({
     id: documentId,
     title: title.trim() || "Untitled document",
     ownerId: userId,
-    currentMarkdown: "",
+    visibility: input?.visibility ?? "private",
+    shareId,
+    currentMarkdown: input?.markdown ?? "",
     createdAt: now,
     updatedAt: now,
   });
@@ -91,6 +130,8 @@ export const getDocument = async (userId: string, documentId: string) => {
       id: documents.id,
       title: documents.title,
       ownerId: documents.ownerId,
+      visibility: documents.visibility,
+      shareId: documents.shareId,
       currentMarkdown: documents.currentMarkdown,
       updatedAt: documents.updatedAt,
       createdAt: documents.createdAt,
@@ -100,15 +141,46 @@ export const getDocument = async (userId: string, documentId: string) => {
     .limit(1);
 
   if (!document) {
-    throw new Response(JSON.stringify({ error: "Document not found" }), {
-      status: 404,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(404, "Document not found");
   }
 
   return {
     ...document,
     role: membership.role,
+    sharePath: getSharePath(document.shareId),
+  };
+};
+
+export const getSharedDocument = async (shareId: string, viewerUserId?: string | null) => {
+  const [document] = await db
+    .select({
+      id: documents.id,
+      title: documents.title,
+      ownerId: documents.ownerId,
+      visibility: documents.visibility,
+      shareId: documents.shareId,
+      currentMarkdown: documents.currentMarkdown,
+      updatedAt: documents.updatedAt,
+      createdAt: documents.createdAt,
+    })
+    .from(documents)
+    .where(eq(documents.shareId, shareId))
+    .limit(1);
+
+  if (!document) {
+    throw jsonError(404, "Document not found");
+  }
+
+  const membership = viewerUserId ? await getMembership(viewerUserId, document.id) : null;
+
+  if (!membership && document.visibility === "private") {
+    throw jsonError(404, "Document not found");
+  }
+
+  return {
+    ...document,
+    role: membership?.role ?? null,
+    sharePath: getSharePath(document.shareId),
   };
 };
 
@@ -118,9 +190,14 @@ export const updateDocument = async (
   input: {
     title?: string;
     markdown?: string;
+    visibility?: DocumentVisibility;
   },
 ) => {
-  await ensureAccess(userId, documentId, "write");
+  const membership = await ensureAccess(userId, documentId, "write");
+
+  if (input.visibility && membership.ownerId !== userId) {
+    throw jsonError(403, "Only owners can change document visibility");
+  }
 
   const updates: Record<string, unknown> = {
     updatedAt: new Date(),
@@ -132,6 +209,10 @@ export const updateDocument = async (
 
   if (typeof input.markdown === "string") {
     updates.currentMarkdown = input.markdown;
+  }
+
+  if (input.visibility) {
+    updates.visibility = input.visibility;
   }
 
   await db.update(documents).set(updates).where(eq(documents.id, documentId));
@@ -211,10 +292,7 @@ export const diffVersions = async (userId: string, documentId: string, fromVersi
   const to = versionRows.find(version => version.id === toVersionId);
 
   if (!from || !to) {
-    throw new Response(JSON.stringify({ error: "Version not found" }), {
-      status: 404,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(404, "Version not found");
   }
 
   return {
@@ -236,10 +314,7 @@ export const restoreVersion = async (userId: string, documentId: string, version
     .limit(1);
 
   if (!version) {
-    throw new Response(JSON.stringify({ error: "Version not found" }), {
-      status: 404,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(404, "Version not found");
   }
 
   await db
@@ -277,10 +352,7 @@ export const grantMember = async (ownerId: string, documentId: string, email: st
   const membership = await ensureAccess(ownerId, documentId, "owner");
 
   if (membership.ownerId !== ownerId) {
-    throw new Response(JSON.stringify({ error: "Only owners can manage sharing" }), {
-      status: 403,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(403, "Only owners can manage sharing");
   }
 
   const [member] = await db
@@ -293,10 +365,7 @@ export const grantMember = async (ownerId: string, documentId: string, email: st
     .limit(1);
 
   if (!member) {
-    throw new Response(JSON.stringify({ error: "User not found" }), {
-      status: 404,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(404, "User not found");
   }
 
   await db
@@ -321,17 +390,11 @@ export const revokeMember = async (ownerId: string, documentId: string, memberUs
   const membership = await ensureAccess(ownerId, documentId, "owner");
 
   if (membership.ownerId !== ownerId) {
-    throw new Response(JSON.stringify({ error: "Only owners can manage sharing" }), {
-      status: 403,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(403, "Only owners can manage sharing");
   }
 
   if (memberUserId === ownerId) {
-    throw new Response(JSON.stringify({ error: "Owners cannot remove themselves" }), {
-      status: 400,
-      headers: { "content-type": "application/json" },
-    });
+    throw jsonError(400, "Owners cannot remove themselves");
   }
 
   await db
