@@ -533,6 +533,38 @@ const server = serve<CollaborationSocketData>({
         }
       }
 
+      // Inject OG meta tags for shared document links (link previews in messaging apps)
+      if (pathname.startsWith("/d/")) {
+        const shareId = pathname.split("/")[2];
+        if (shareId) {
+          try {
+            const doc = await getSharedDocument(shareId, null);
+            const description = (doc.currentMarkdown ?? "").slice(0, 200).replace(/[#*_`\n\r]+/g, " ").trim();
+            const baseUrl = getBaseUrl(request);
+            const indexHtml = isProduction
+              ? await Bun.file(`${distDir}/index.html`).text()
+              : await Bun.file(new URL("./index.html", import.meta.url)).text();
+            const ogTags = [
+              `<meta property="og:title" content="${doc.title.replace(/"/g, "&quot;")}" />`,
+              `<meta property="og:description" content="${description.replace(/"/g, "&quot;")}" />`,
+              `<meta property="og:type" content="article" />`,
+              `<meta property="og:url" content="${baseUrl}/d/${shareId}" />`,
+              `<meta property="og:site_name" content="ShareMyMarkdown" />`,
+              `<meta name="twitter:card" content="summary" />`,
+              `<meta name="twitter:title" content="${doc.title.replace(/"/g, "&quot;")}" />`,
+              `<meta name="twitter:description" content="${description.replace(/"/g, "&quot;")}" />`,
+              `<title>${doc.title.replace(/</g, "&lt;")} - ShareMyMarkdown</title>`,
+            ].join("\n    ");
+            const html = indexHtml.replace("<title>ShareMyMarkdown</title>", ogTags);
+            return new Response(html, {
+              headers: { "content-type": "text/html; charset=utf-8" },
+            });
+          } catch {
+            // document not found or private — fall through to normal index
+          }
+        }
+      }
+
       if (isProduction && !pathname.startsWith("/api/")) {
         return serveIndex()!;
       }

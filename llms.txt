@@ -76,6 +76,12 @@ bun add -g @sharemymarkdown/smm
 smm share draft.md --visibility unlisted
 ```
 
+Claude Code skill:
+```bash
+smm install-skill
+```
+Installs `/smm` to `~/.claude/skills/smm.md`. Restart Claude Code, then use `/smm` to share.
+
 Local development:
 ```bash
 bun install

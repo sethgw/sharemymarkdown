@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { CollaborativeMarkdownEditor } from "@/components/collaborative-markdown-editor";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Textarea } from "@/components/ui/textarea";
-import { renderMarkdown } from "@/lib/render-markdown";
+import { extractHeadings, renderMarkdown } from "@/lib/render-markdown";
 import "./index.css";
 
 // ---------------------------------------------------------------------------
@@ -1190,6 +1190,82 @@ function SharedDocumentContent({
 // Shared document standalone (unauthenticated viewers)
 // ---------------------------------------------------------------------------
 
+function ReadingProgress() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const onScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = globalThis.document.documentElement.scrollHeight - window.innerHeight;
+      setProgress(docHeight > 0 ? Math.min(100, (scrollTop / docHeight) * 100) : 0);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div className="fixed top-0 left-0 z-50 h-0.5 w-full bg-stone-200">
+      <div
+        className="h-full bg-stone-500 transition-[width] duration-150"
+        style={{ width: `${progress}%` }}
+      />
+    </div>
+  );
+}
+
+function TableOfContents({ headings }: { headings: { level: number; text: string; id: string }[] }) {
+  if (headings.length < 3) return null;
+  const minLevel = Math.min(...headings.map((h) => h.level));
+
+  return (
+    <nav className="mb-8 rounded-xl border border-stone-200 bg-stone-50/60 p-4">
+      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-500">Contents</p>
+      <ul className="space-y-1 text-sm">
+        {headings.map((h) => (
+          <li key={h.id} style={{ paddingLeft: `${(h.level - minLevel) * 0.75}rem` }}>
+            <a
+              href={`#${h.id}`}
+              className="text-stone-600 no-underline hover:text-stone-900 hover:underline"
+            >
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+function useCopyCodeButtons(articleRef: React.RefObject<HTMLElement | null>) {
+  useEffect(() => {
+    const el = articleRef.current;
+    if (!el) return;
+
+    const pres = el.querySelectorAll("pre");
+    const buttons: HTMLButtonElement[] = [];
+
+    for (const pre of pres) {
+      pre.style.position = "relative";
+      const btn = globalThis.document.createElement("button");
+      btn.textContent = "Copy";
+      btn.className = "copy-code-btn";
+      btn.addEventListener("click", () => {
+        const code = pre.querySelector("code");
+        void navigator.clipboard.writeText(code?.textContent ?? "").then(() => {
+          btn.textContent = "Copied!";
+          setTimeout(() => { btn.textContent = "Copy"; }, 1500);
+        });
+      });
+      pre.appendChild(btn);
+      buttons.push(btn);
+    }
+
+    return () => {
+      for (const btn of buttons) btn.remove();
+    };
+  });
+}
+
 function SharedDocumentStandalone({
   shareId,
   session,
@@ -1199,6 +1275,7 @@ function SharedDocumentStandalone({
 }) {
   const [document, setDocument] = useState<SharedDocumentDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const articleRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     void fetchJson<SharedDocumentDetail>(`/api/shared/${shareId}`)
@@ -1213,7 +1290,10 @@ function SharedDocumentStandalone({
 
   const deferredMarkdown = useDeferredValue(document?.currentMarkdown ?? "");
   const previewHtml = useMemo(() => renderMarkdown(deferredMarkdown), [deferredMarkdown]);
+  const headings = useMemo(() => extractHeadings(document?.currentMarkdown ?? ""), [document?.currentMarkdown]);
   const stats = useMemo(() => readingStats(document?.currentMarkdown ?? ""), [document?.currentMarkdown]);
+
+  useCopyCodeButtons(articleRef);
 
   if (!document) {
     return (
@@ -1224,35 +1304,48 @@ function SharedDocumentStandalone({
   }
 
   return (
-    <div className="mx-auto min-h-screen w-full max-w-4xl px-6 py-10">
-      <header className="mb-8 border-b border-stone-200 pb-6">
-        <h1 className="text-3xl font-semibold tracking-tight text-stone-900">{document.title}</h1>
-        <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
-          <span>{stats.words} words</span>
-          <span>{stats.readingMinutes} min read</span>
-          <span>Updated {formatDate(document.updatedAt)}</span>
-        </div>
-      </header>
-      {error && (
-        <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-      )}
-      <article
-        className="markdown-body prose prose-stone mx-auto max-w-3xl text-[15px] leading-7"
-        dangerouslySetInnerHTML={{ __html: previewHtml }}
-      />
-      <div className="mt-10 border-t border-stone-200 pt-6">
-        <Button
-          disabled={!session.githubConfigured}
-          onClick={() =>
-            window.location.assign(
-              `/auth/github?callback=${encodeURIComponent(window.location.pathname + window.location.search)}`,
-            )
-          }
-        >
-          Sign in to collaborate
-        </Button>
+    <>
+      <ReadingProgress />
+      <div className="mx-auto min-h-screen w-full max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+        <header className="mb-8 border-b border-stone-200 pb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-stone-900 sm:text-3xl">{document.title}</h1>
+          <div className="mt-2 flex flex-wrap gap-3 text-xs text-muted-foreground">
+            <span>{stats.words} words</span>
+            <span>{stats.readingMinutes} min read</span>
+            <span>Updated {formatDate(document.updatedAt)}</span>
+          </div>
+        </header>
+        {error && (
+          <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+        )}
+        <TableOfContents headings={headings} />
+        <article
+          ref={articleRef}
+          className="markdown-body prose prose-stone mx-auto max-w-3xl text-[15px] leading-7"
+          dangerouslySetInnerHTML={{ __html: previewHtml }}
+        />
+        <footer className="mt-12 flex flex-col items-center gap-3 border-t border-stone-200 pt-6 text-center">
+          <p className="text-xs text-stone-400">
+            Shared via{" "}
+            <a href="/" className="text-stone-500 underline underline-offset-2 hover:text-stone-700">
+              ShareMyMarkdown
+            </a>
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={!session.githubConfigured}
+            onClick={() =>
+              window.location.assign(
+                `/auth/github?callback=${encodeURIComponent(window.location.pathname + window.location.search)}`,
+              )
+            }
+          >
+            Sign in to collaborate
+          </Button>
+        </footer>
       </div>
-    </div>
+    </>
   );
 }
 

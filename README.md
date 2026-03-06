@@ -91,6 +91,16 @@ bun add -g @sharemymarkdown/smm
 smm share draft.md --visibility unlisted
 ```
 
+## Claude Code Skill
+
+Install the `/smm` skill so Claude Code can share markdown on your behalf:
+
+```bash
+smm install-skill
+```
+
+After restarting Claude Code, type `/smm` to share files, plans, or conversation content as a link.
+
 ## First Useful Commands
 
 Sign in from the CLI:

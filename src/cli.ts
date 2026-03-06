@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -111,6 +111,7 @@ const printHelp = () => {
   console.log(`  ${productCommand} members revoke <document-id> <user-id>`);
   console.log(`  ${productCommand} config show`);
   console.log(`  ${productCommand} config set default-visibility <private|unlisted|public>`);
+  console.log(`  ${productCommand} install-skill`);
   console.log("");
   console.log("Developer shortcut:");
   console.log("  bun run cli -- <command>");
@@ -634,6 +635,79 @@ const runMemberCommand = async (input: string[]) => {
   throw new Error("Unknown members command");
 };
 
+const SKILL_CONTENT = `# /smm - Share Markdown
+
+When the user wants to share something — a plan, draft, notes, summary, or any markdown — use \`smm\` to create a shareable link.
+
+## How to use
+
+1. Identify what to share: a file they mention, or content from the conversation (a plan, summary, etc.)
+
+2. File:
+   \`\`\`bash
+   smm share <file> --visibility unlisted
+   \`\`\`
+
+3. Conversation content:
+   \`\`\`bash
+   echo '<markdown>' | smm share --title "The Title" --visibility unlisted
+   \`\`\`
+
+4. Share with someone specific:
+   \`\`\`bash
+   smm members grant <document-id> user@example.com editor
+   \`\`\`
+
+5. Return the link.
+
+## Auth
+
+If auth error: \`smm auth login\`
+
+## Install
+
+If not found: \`bun add -g @sharemymarkdown/smm\`
+
+## Visibility
+
+- \`private\` — owner and granted members only
+- \`unlisted\` — anyone with the link (default)
+- \`public\` — discoverable
+
+## Full command reference
+
+\`\`\`bash
+smm docs list
+smm docs get <id>
+smm docs edit <id>
+smm versions save <id> "message"
+smm versions diff <id> <from> <to>
+smm versions restore <id> <version-id>
+smm revisions create <id> "title"
+smm revisions edit <id> <revision-id>
+smm revisions diff <id> <revision-id> [base|live]
+smm revisions apply <id> <revision-id>
+smm members list <id>
+smm members grant <id> <email> <role>
+smm members revoke <id> <user-id>
+smm config show
+smm config set default-visibility unlisted
+\`\`\`
+`;
+
+const installSkill = async () => {
+  const claudeDir = path.join(os.homedir(), ".claude");
+  const skillsDir = path.join(claudeDir, "skills");
+  const skillPath = path.join(skillsDir, "smm.md");
+
+  await mkdir(skillsDir, { recursive: true });
+  await writeFile(skillPath, SKILL_CONTENT, "utf8");
+
+  console.log(`Installed /smm skill to ${skillPath}`);
+  console.log("");
+  console.log("Restart Claude Code to activate. Then use /smm to share markdown.");
+};
+
 const showConfig = async () => {
   const config = await readLocalCliConfig();
   console.log(
@@ -727,6 +801,9 @@ const run = async () => {
       if (subcommand === "show") return showConfig();
       if (subcommand === "set") return setConfig(args[2], args[3]);
       break;
+    }
+    case "install-skill": {
+      return installSkill();
     }
   }
 

@@ -73,6 +73,14 @@ smm share draft.md --visibility unlisted
 sharemymarkdown share draft.md --visibility unlisted
 ```
 
+Claude Code skill install:
+
+```bash
+smm install-skill
+```
+
+This writes the `/smm` skill to `~/.claude/skills/smm.md` so Claude Code can share markdown via `/smm`.
+
 Publish artifact flow:
 
 ```bash
