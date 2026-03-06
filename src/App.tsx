@@ -148,72 +148,71 @@ function Landing({ session }: { session: SessionPayload }) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center gap-10 px-6 py-12">
       <div className="space-y-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-600">CLI-first collaborative Markdown</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-600">Collaborative Markdown</p>
         <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
-          Git-style history and realtime editing without the Git-shaped pain.
+          Write, share, and collaborate on Markdown without the overhead.
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-stone-600">
-          The same document system is exposed through CLI, web, and MCP. GitHub auth is the first provider, CLI remains
-          the primary surface.
+          Create a document, get a shareable link, and collaborate in realtime. Works from the browser, CLI, or your favorite AI agent.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_22rem] lg:items-start">
         <Card className="border-stone-200/80 bg-white/85 backdrop-blur">
           <CardHeader>
-            <CardTitle>Built For Sharing Drafts Without Losing Context</CardTitle>
+            <CardTitle>Share Markdown, Not Screenshots</CardTitle>
             <CardDescription>
-              Start inside an agent or terminal, choose visibility, and hand around one durable Markdown link instead of pasting text back and forth.
+              Turn any draft into a clean, shareable link. Choose who can see it, edit together in realtime, and keep a full version history.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Agent to link</p>
+                <p className="text-sm font-semibold text-stone-900">Instant sharing</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Move a draft out of Codex, Claude, Cursor, or your terminal and turn it into a clean shared document.
+                  Publish any Markdown draft and get a shareable link in seconds. No signup wall for readers.
                 </p>
               </div>
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Visibility on purpose</p>
+                <p className="text-sm font-semibold text-stone-900">Your rules</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Decide whether the document should be private, unlisted, or public instead of improvising permissions later.
+                  Set a document to private, unlisted, or public. Control who can read and who can edit.
                 </p>
               </div>
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">One link, same doc</p>
+                <p className="text-sm font-semibold text-stone-900">Realtime collaboration</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Keep the same document moving through CLI, web, and MCP instead of fragmenting the conversation across copies.
+                  Edit together live with presence indicators. Save versions and create revision drafts before merging changes.
                 </p>
               </div>
             </div>
 
             <div className="rounded-[1.4rem] border border-stone-200 bg-[#fffdf8] p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-stone-500">Typical Flow</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-stone-500">How It Works</p>
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 <div>
-                  <p className="text-sm font-semibold text-stone-900">1. Draft where you already work</p>
+                  <p className="text-sm font-semibold text-stone-900">1. Write your draft</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Write inside your agent or local editor first. ShareMyMarkdown should fit into that flow, not replace it.
+                    Start in any editor, terminal, or AI assistant. Write Markdown the way you already do.
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-stone-900">2. Run `sharemymarkdown` or `smm`</p>
+                  <p className="text-sm font-semibold text-stone-900">2. Share it</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Choose the visibility you want, publish the draft, and get back a single link that represents the document.
+                    Create a document on ShareMyMarkdown and get a link you can send to anyone.
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-stone-900">3. Review through the link</p>
+                  <p className="text-sm font-semibold text-stone-900">3. Collaborate</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Open it in the browser, send it to collaborators, or hand it back to an agent without losing the thread.
+                    Edit together in the browser, save versions, and review changes before they go live.
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="rounded-[1.4rem] border border-stone-200 bg-stone-950 px-5 py-4 text-stone-100">
-              <p className="text-xs uppercase tracking-[0.18em] text-stone-400">Intended Command Shape</p>
+              <p className="text-xs uppercase tracking-[0.18em] text-stone-400">CLI Quick Start</p>
               <pre className="mt-3 overflow-x-auto text-sm leading-7 text-stone-100">{`sharemymarkdown share draft.md --visibility unlisted
 # alias
 smm share draft.md --visibility unlisted`}</pre>
@@ -226,15 +225,15 @@ smm share draft.md --visibility unlisted`}</pre>
             <CardTitle className="text-stone-950">{session.user ? `Welcome back, ${session.user.name}` : "Sign in to start sharing"}</CardTitle>
             <CardDescription className="text-stone-600">
               {session.githubConfigured
-                ? "GitHub is the first auth provider for this instance."
-                : "GitHub auth is not configured yet. Add credentials to enable login."}
+                ? "Sign in with GitHub to create and manage your documents."
+                : "GitHub auth is not configured yet."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-6 text-stone-600">
               {session.user
-                ? "Your browser session, CLI login, and MCP access all route back to the same account and document set."
-                : "Sign in once, then use the same account for browser reading, CLI sharing, and MCP-driven workflows."}
+                ? "Your documents are available in the browser, CLI, and through MCP with the same account."
+                : "One account for everything. Create documents in the browser, share from the CLI, or connect through MCP."}
             </div>
             {session.user ? (
               <>
@@ -306,7 +305,7 @@ function Dashboard({ session }: { session: SessionPayload }) {
         <div>
           <p className="text-sm uppercase tracking-[0.22em] text-stone-500">Dashboard</p>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-stone-900">{session.user?.name}&apos;s documents</h1>
-          <p className="mt-2 text-stone-600">Create, edit, review, version, and share Markdown documents from the same backend the CLI uses.</p>
+          <p className="mt-2 text-stone-600">Your Markdown documents, all in one place.</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => window.location.assign("/auth/signout?callback=/")}>
