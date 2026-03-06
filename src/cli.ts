@@ -112,10 +112,15 @@ const printHelp = () => {
   console.log(`  ${productCommand} config show`);
   console.log(`  ${productCommand} config set default-visibility <private|unlisted|public>`);
   console.log(`  ${productCommand} open <share-url-or-id>`);
+  console.log(`  ${productCommand} watch <document-id>`);
   console.log(`  ${productCommand} install-skill`);
   console.log("");
   console.log("Pipe into Claude Code:");
   console.log(`  ${productCommand} open <share-url> | claude`);
+  console.log("");
+  console.log("Round-trip (share, let someone edit, pull changes back):");
+  console.log(`  ${productCommand} share plan.md --json        # note the id`);
+  console.log(`  ${productCommand} watch <id>                  # blocks until edited, prints new markdown`);
   console.log("");
   console.log("Developer shortcut:");
   console.log("  bun run cli -- <command>");
@@ -662,7 +667,30 @@ When the user wants to share something — a plan, draft, notes, summary, or any
    smm members grant <document-id> user@example.com editor
    \`\`\`
 
-5. Return the link.
+5. Return the link and the document ID.
+
+## Round-trip flow
+
+Share a document, let someone edit it in the browser, then pull the changes back:
+
+1. Share:
+   \`\`\`bash
+   smm share plan.md --visibility unlisted --json
+   \`\`\`
+   Save the \`id\` from the JSON output.
+
+2. Give the user the share URL. They edit in the web editor.
+
+3. Wait for changes:
+   \`\`\`bash
+   smm watch <document-id>
+   \`\`\`
+   This blocks until the document is modified, then prints the updated markdown.
+
+4. Or pull the latest immediately:
+   \`\`\`bash
+   smm docs get <document-id>
+   \`\`\`
 
 ## Auth
 
@@ -684,6 +712,8 @@ If not found: \`bun add -g @sharemymarkdown/smm\`
 smm docs list
 smm docs get <id>
 smm docs edit <id>
+smm watch <id>
+smm open <share-url-or-id>
 smm versions save <id> "message"
 smm versions diff <id> <from> <to>
 smm versions restore <id> <version-id>
@@ -698,6 +728,27 @@ smm config show
 smm config set default-visibility unlisted
 \`\`\`
 `;
+
+const watchDoc = async (documentId: string) => {
+  const initial = await apiFetch<DocumentDetail>(`/api/documents/${documentId}`);
+  let lastMarkdown = initial.currentMarkdown;
+  let lastUpdatedAt = initial.updatedAt;
+
+  process.stderr.write(`Watching "${initial.title}" for changes... (Ctrl+C to stop)
+`);
+
+  while (true) {
+    await Bun.sleep(2000);
+
+    const current = await apiFetch<DocumentDetail>(`/api/documents/${documentId}`);
+    if (current.updatedAt !== lastUpdatedAt || current.currentMarkdown !== lastMarkdown) {
+      lastMarkdown = current.currentMarkdown;
+      lastUpdatedAt = current.updatedAt;
+      console.log(current.currentMarkdown);
+      return;
+    }
+  }
+};
 
 const openSharedDoc = async (input: string) => {
   // Accept a full URL like https://sharemymarkdown.com/d/abc123 or just the shareId
@@ -822,8 +873,13 @@ const run = async () => {
       if (subcommand === "set") return setConfig(args[2], args[3]);
       break;
     }
+    case "watch": {
+      if (!subcommand) throw new Error("Usage: smm watch <document-id>");
+      return watchDoc(subcommand);
+    }
     case "open": {
       if (!subcommand) throw new Error("Usage: smm open <share-url-or-id>");
+  console.log(`  ${productCommand} watch <document-id>`);
       return openSharedDoc(subcommand);
     }
     case "install-skill": {
