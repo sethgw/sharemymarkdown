@@ -1,6 +1,10 @@
 # ShareMyMarkdown
 
-ShareMyMarkdown is a CLI-first collaborative Markdown system.
+# ShareMyMarkdown
+
+> https://sharemymarkdown.com
+
+CLI-first collaborative Markdown with realtime editing, versions, revisions, and sharing.
 
 Primary rule:
 - CLI is the primary surface.
@@ -25,6 +29,13 @@ Stack:
 - Drizzle ORM beta 1.0.x
 - Better Auth
 
+Agent discovery:
+- `/.well-known/agents.json` - machine-readable agent capabilities and endpoints
+- `/.well-known/oauth-authorization-server` - MCP/OAuth discovery
+- `/.well-known/oauth-protected-resource` - protected resource metadata
+- `/llms.txt` - this file
+- `/mcp` - MCP tool endpoint
+
 Important routes:
 - `/`
 - `/dashboard`
@@ -40,19 +51,18 @@ Important routes:
 - `/api/collab/:documentId`
 - `/mcp`
 - `/mcp/login`
-- `/.well-known/oauth-authorization-server`
-- `/.well-known/oauth-protected-resource`
-- `/llms.txt`
 
 Markdown representations:
 - Key GET endpoints support markdown output with `Accept: text/markdown`
 - The same endpoints also support `?format=markdown` or `?format=md`
 
 Important files:
-- `AGENTS.md`
+- `AGENTS.md` (canonical agent instructions)
+- `CODEX.md` -> AGENTS.md
+- `CLAUDE.md` -> AGENTS.md
+- `CURSOR.md` -> AGENTS.md
 - `docs/architecture.md`
 - `src/index.ts`
-- `src/cli.ts`
 - `src/mcp/server.ts`
 - `src/server/services/documents.ts`
 - `src/server/services/revisions.ts`
@@ -62,14 +72,13 @@ Important files:
 Local development:
 ```bash
 bun install
-bun run cli help
 bun dev
 bun run build
 ```
 
 Environment:
 - `DATABASE_URL`
-- `TURSO_TOKEN` or `TURSO_AUTH_TOKEN` or `TURBO_TOKEN`
+- `TURSO_AUTH_TOKEN`
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL`
 - `GITHUB_CLIENT_ID`

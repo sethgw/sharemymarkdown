@@ -225,6 +225,41 @@ const server = serve<CollaborationSocketData>({
         });
       }
 
+      if (pathname === "/.well-known/agents.json") {
+        return json({
+          name: "ShareMyMarkdown",
+          description: "CLI-first collaborative Markdown with realtime editing, versions, revisions, and sharing.",
+          url: getBaseUrl(request),
+          capabilities: {
+            mcp: {
+              endpoint: `${getBaseUrl(request)}/mcp`,
+              discovery: `${getBaseUrl(request)}/.well-known/oauth-authorization-server`,
+            },
+            api: {
+              base: `${getBaseUrl(request)}/api`,
+              auth: "bearer",
+              markdown_representations: true,
+              accept_header: "text/markdown",
+              query_param: "format=md",
+            },
+            collaboration: {
+              protocol: "yjs",
+              transport: "websocket",
+              endpoint: `${getBaseUrl(request)}/api/collab`,
+            },
+          },
+          discovery: {
+            llms_txt: `${getBaseUrl(request)}/llms.txt`,
+            agents_md: "https://github.com/sethgw/sharemymarkdown/blob/master/AGENTS.md",
+            architecture: "https://github.com/sethgw/sharemymarkdown/blob/master/docs/architecture.md",
+          },
+        }, {
+          headers: {
+            "cache-control": "public, max-age=300",
+          },
+        });
+      }
+
       if (pathname === "/mcp/login") {
         return handleMcpLogin(request);
       }

@@ -8,7 +8,7 @@ If you are an agent or operator landing in this repo, the practical rule is simp
 - use MCP when you need tool access from an editor or agent runtime
 - use the web app for reading, live collaboration, sharing, and review
 
-Canonical agent guidance lives in [AGENTS.md](/Users/seth/repositories/sharemymarkdown/AGENTS.md). [CLAUDE.md](/Users/seth/repositories/sharemymarkdown/CLAUDE.md) is a symlink to that file.
+Canonical agent guidance lives in [AGENTS.md](AGENTS.md). [CLAUDE.md](CLAUDE.md), [CODEX.md](CODEX.md), and [CURSOR.md](CURSOR.md) are symlinks to that file.
 
 ## What To Do With This Product
 
@@ -147,5 +147,5 @@ High-value endpoints:
 
 ## Reference
 
-- Agent instructions: [AGENTS.md](/Users/seth/repositories/sharemymarkdown/AGENTS.md)
-- Architecture blueprint: [docs/architecture.md](/Users/seth/repositories/sharemymarkdown/docs/architecture.md)
+- Agent instructions: [AGENTS.md](AGENTS.md)
+- Architecture blueprint: [docs/architecture.md](docs/architecture.md)

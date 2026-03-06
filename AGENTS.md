@@ -27,7 +27,6 @@ Do not invent product behavior only inside React components or HTTP handlers.
 ## Important Paths
 
 - `src/index.ts`: Bun server, HTTP routes, websocket upgrades
-- `src/cli.ts`: CLI surface
 - `src/mcp/server.ts`: MCP tool surface
 - `src/server/services/documents.ts`: document, version, sharing services
 - `src/server/services/revisions.ts`: draft and revision services
@@ -119,17 +118,26 @@ Canonical file:
 
 - `AGENTS.md`
 
-Symlinked compatibility file:
+Symlinked compatibility files:
 
 - `CLAUDE.md -> AGENTS.md`
+- `CODEX.md -> AGENTS.md`
+- `CURSOR.md -> AGENTS.md`
 
 Machine-readable summary:
 
 - `llms.txt`
 
-## Immediate Priorities
+## Deployment
 
-- Validate live collaboration in two browser tabs
-- Verify CLI and MCP flows against the same document
-- Keep production auth and deployment config explicit
-- Avoid instruction drift between agent-facing files
+- Production URL: `https://sharemymarkdown.com`
+- Docker/Dokploy via `docker-compose.yml`
+- GitHub Actions deploy on push to `master`
+- `drizzle-kit push` runs on container start to sync DB schema
+
+## Runtime Agent Discovery
+
+- `/.well-known/agents.json`: machine-readable agent capabilities
+- `/.well-known/oauth-authorization-server`: MCP/OAuth discovery
+- `/.well-known/oauth-protected-resource`: protected resource metadata
+- `/llms.txt`: machine-readable repo and product summary
