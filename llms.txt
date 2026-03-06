@@ -1,0 +1,76 @@
+# ShareMyMarkdown
+
+ShareMyMarkdown is a CLI-first collaborative Markdown system.
+
+Primary rule:
+- CLI is the primary surface.
+- MCP and web are parity adapters over the same application core.
+
+Core capabilities:
+- GitHub auth
+- document create/read/edit
+- realtime Yjs collaboration in web
+- presence
+- versions: save, list, diff, restore
+- revisions: create, edit, diff, apply
+- sharing: list, grant, revoke
+- MCP parity for the same application commands
+
+Stack:
+- Bun
+- React 19
+- CodeMirror 6
+- Yjs
+- Turso / libSQL
+- Drizzle ORM beta 1.0.x
+- Better Auth
+
+Important routes:
+- `/`
+- `/dashboard`
+- `/documents/:id`
+- `/api/health`
+- `/api/session`
+- `/api/documents`
+- `/api/documents/:id`
+- `/api/documents/:id/presence`
+- `/api/documents/:id/versions`
+- `/api/documents/:id/revisions`
+- `/api/documents/:id/members`
+- `/api/collab/:documentId`
+- `/mcp`
+- `/mcp/login`
+- `/.well-known/oauth-authorization-server`
+- `/.well-known/oauth-protected-resource`
+- `/llms.txt`
+
+Markdown representations:
+- Key GET endpoints support markdown output with `Accept: text/markdown`
+- The same endpoints also support `?format=markdown` or `?format=md`
+
+Important files:
+- `AGENTS.md`
+- `docs/architecture.md`
+- `src/index.ts`
+- `src/cli.ts`
+- `src/mcp/server.ts`
+- `src/server/services/documents.ts`
+- `src/server/services/revisions.ts`
+- `src/server/collaboration.ts`
+- `src/server/db/schema.ts`
+
+Local development:
+```bash
+bun install
+bun run cli help
+bun dev
+bun run build
+```
+
+Environment:
+- `DATABASE_URL`
+- `TURSO_TOKEN` or `TURSO_AUTH_TOKEN` or `TURBO_TOKEN`
+- `BETTER_AUTH_SECRET`
+- `BETTER_AUTH_URL`
+- `GITHUB_CLIENT_ID`
+- `GITHUB_CLIENT_SECRET`

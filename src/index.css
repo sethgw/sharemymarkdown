@@ -1,0 +1,126 @@
+@import "../styles/globals.css";
+
+@layer base {
+  :root {
+    font-family: var(--font-ui);
+  }
+
+  body {
+    @apply min-w-[320px] min-h-screen m-0 bg-background text-foreground;
+    background:
+      radial-gradient(circle at top left, rgba(191, 219, 254, 0.5), transparent 28%),
+      radial-gradient(circle at top right, rgba(251, 191, 36, 0.22), transparent 24%),
+      linear-gradient(180deg, #f9f5ee 0%, #f4ecdf 45%, #eee5d8 100%);
+  }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(120, 113, 108, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 113, 108, 0.06) 1px, transparent 1px);
+  background-size: 38px 38px;
+  pointer-events: none;
+}
+
+@keyframes slide {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 256px 224px;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion) {
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+  }
+}
+
+.markdown-body {
+  color: #292524;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 1.35em 0 0.5em;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: #1c1917;
+}
+
+.markdown-body h1 {
+  font-size: 2rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.45rem;
+}
+
+.markdown-body h3 {
+  font-size: 1.2rem;
+}
+
+.markdown-body p,
+.markdown-body li,
+.markdown-body blockquote {
+  margin: 0.85em 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.5rem;
+}
+
+.markdown-body a {
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.markdown-body blockquote {
+  border-left: 3px solid rgba(120, 113, 108, 0.24);
+  padding-left: 1rem;
+  color: #57534e;
+}
+
+.markdown-body code {
+  border-radius: 0.45rem;
+  background: rgba(28, 25, 23, 0.06);
+  padding: 0.16rem 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.markdown-body pre {
+  overflow-x: auto;
+  border-radius: 1rem;
+  background: #1c1917;
+  padding: 1rem 1.1rem;
+  color: #fafaf9;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+}
