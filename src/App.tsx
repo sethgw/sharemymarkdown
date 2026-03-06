@@ -148,41 +148,41 @@ function Landing({ session }: { session: SessionPayload }) {
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center gap-10 px-6 py-12">
       <div className="space-y-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-600">Collaborative Markdown</p>
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-600">Markdown for teams and agents</p>
         <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
-          Write, share, and collaborate on Markdown without the overhead.
+          One document. Many collaborators. Humans and agents together.
         </h1>
         <p className="max-w-2xl text-lg leading-8 text-stone-600">
-          Create a document, get a shareable link, and collaborate in realtime. Works from the browser, CLI, or your favorite AI agent.
+          Share Markdown between people, teams, and AI agents. Everyone edits the same document in realtime — from a browser, a CLI, or an MCP-connected agent.
         </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_22rem] lg:items-start">
         <Card className="border-stone-200/80 bg-white/85 backdrop-blur">
           <CardHeader>
-            <CardTitle>Share Markdown, Not Screenshots</CardTitle>
+            <CardTitle>Collaborative Markdown for humans and agents</CardTitle>
             <CardDescription>
-              Turn any draft into a clean, shareable link. Choose who can see it, edit together in realtime, and keep a full version history.
+              A shared workspace where people, teams, and AI agents co-author Markdown in realtime — from any surface.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Instant sharing</p>
+                <p className="text-sm font-semibold text-stone-900">Multi-surface access</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Publish any Markdown draft and get a shareable link in seconds. No signup wall for readers.
+                  Work from the browser, CLI, or MCP. Agents and humans share the same documents and the same realtime session.
                 </p>
               </div>
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Your rules</p>
+                <p className="text-sm font-semibold text-stone-900">Shareable by default</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Set a document to private, unlisted, or public. Control who can read and who can edit.
+                  Every document gets a link. Share it with a teammate, an agent, or the world — you control the visibility.
                 </p>
               </div>
               <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Realtime collaboration</p>
+                <p className="text-sm font-semibold text-stone-900">Realtime co-editing</p>
                 <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Edit together live with presence indicators. Save versions and create revision drafts before merging changes.
+                  Multiple cursors, live presence, and version history. People and agents edit side by side with full visibility.
                 </p>
               </div>
             </div>
@@ -191,21 +191,21 @@ function Landing({ session }: { session: SessionPayload }) {
               <p className="text-xs uppercase tracking-[0.18em] text-stone-500">How It Works</p>
               <div className="mt-4 grid gap-4 md:grid-cols-3">
                 <div>
-                  <p className="text-sm font-semibold text-stone-900">1. Write your draft</p>
+                  <p className="text-sm font-semibold text-stone-900">1. Create a document</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Start in any editor, terminal, or AI assistant. Write Markdown the way you already do.
+                    From the browser, the CLI, or an MCP-connected agent. One command, one link.
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-stone-900">2. Share it</p>
+                  <p className="text-sm font-semibold text-stone-900">2. Invite collaborators</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Create a document on ShareMyMarkdown and get a link you can send to anyone.
+                    Share the link with teammates or give an agent access. Everyone joins the same live session.
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-stone-900">3. Collaborate</p>
+                  <p className="text-sm font-semibold text-stone-900">3. Edit together</p>
                   <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Edit together in the browser, save versions, and review changes before they go live.
+                    Co-author in realtime. Save versions, propose revisions, and diff changes — all tracked.
                   </p>
                 </div>
               </div>
@@ -222,18 +222,18 @@ smm share draft.md --visibility unlisted`}</pre>
 
         <Card className="border-stone-200/80 bg-white/92 shadow-[0_20px_60px_rgba(28,25,23,0.08)]">
           <CardHeader>
-            <CardTitle className="text-stone-950">{session.user ? `Welcome back, ${session.user.name}` : "Sign in to start sharing"}</CardTitle>
+            <CardTitle className="text-stone-950">{session.user ? `Welcome back, ${session.user.name}` : "Sign in to collaborate"}</CardTitle>
             <CardDescription className="text-stone-600">
               {session.githubConfigured
-                ? "Sign in with GitHub to create and manage your documents."
+                ? "Sign in with GitHub to create, share, and co-edit documents."
                 : "GitHub auth is not configured yet."}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-6 text-stone-600">
               {session.user
-                ? "Your documents are available in the browser, CLI, and through MCP with the same account."
-                : "One account for everything. Create documents in the browser, share from the CLI, or connect through MCP."}
+                ? "Your documents are accessible from the browser, CLI, and any MCP-connected agent."
+                : "One account across every surface — browser, CLI, and MCP. Collaborate with people and agents alike."}
             </div>
             {session.user ? (
               <>
@@ -267,7 +267,7 @@ smm share draft.md --visibility unlisted`}</pre>
 function Dashboard({ session }: { session: SessionPayload }) {
   const [documents, setDocuments] = useState<DocumentSummary[]>([]);
   const [title, setTitle] = useState("");
-  const [visibility, setVisibility] = useState<DocumentVisibility>("private");
+  const [visibility, setVisibility] = useState<DocumentVisibility>("unlisted");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 

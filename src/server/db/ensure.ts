@@ -98,7 +98,7 @@ const statements = [
     id TEXT PRIMARY KEY NOT NULL,
     title TEXT NOT NULL,
     owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    visibility TEXT NOT NULL DEFAULT 'private',
+    visibility TEXT NOT NULL DEFAULT 'unlisted',
     share_id TEXT NOT NULL DEFAULT '',
     current_markdown TEXT NOT NULL DEFAULT '',
     created_at INTEGER NOT NULL,
@@ -350,7 +350,7 @@ const ensureOauthPluginSchema = async () => {
 const createShareId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 12);
 
 const ensureDocumentVisibilitySchema = async () => {
-  await ensureColumn("documents", "visibility", `ALTER TABLE documents ADD COLUMN visibility TEXT NOT NULL DEFAULT 'private'`);
+  await ensureColumn("documents", "visibility", `ALTER TABLE documents ADD COLUMN visibility TEXT NOT NULL DEFAULT 'unlisted'`);
   await ensureColumn("documents", "share_id", `ALTER TABLE documents ADD COLUMN share_id TEXT NOT NULL DEFAULT ''`);
 
   const documentsWithoutShareIds = await libsql.execute(`

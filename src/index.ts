@@ -117,20 +117,27 @@ const handleGitHubLogin = async (request: Request) => {
 
   const url = new URL(request.url);
   const callbackURL = url.searchParams.get("callback") ?? "/";
-  const result = await auth.api.signInSocial({
-    headers: request.headers,
-    body: {
-      provider: "github",
-      callbackURL,
-      disableRedirect: true,
-    },
+  const socialHeaders = new Headers(request.headers);
+  socialHeaders.set("content-type", "application/json");
+  const socialRequest = new Request(new URL("/api/auth/sign-in/social", request.url), {
+    method: "POST",
+    headers: socialHeaders,
+    body: JSON.stringify({ provider: "github", callbackURL }),
   });
 
-  if (!result?.url) {
+  const response = await auth.handler(socialRequest);
+  const redirectUrl = response.headers.get("location");
+
+  if (!redirectUrl) {
     return json({ error: "Unable to start GitHub login" }, { status: 500 });
   }
 
-  return Response.redirect(result.url, 302);
+  const headers = new Headers();
+  for (const cookie of response.headers.getSetCookie()) {
+    headers.append("set-cookie", cookie);
+  }
+  headers.set("location", redirectUrl);
+  return new Response(null, { status: 302, headers });
 };
 
 const handleSignOut = async (request: Request) => {

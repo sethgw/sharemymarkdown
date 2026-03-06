@@ -156,7 +156,7 @@ export const documents = sqliteTable(
     ownerId: text("owner_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    visibility: text("visibility").$type<DocumentVisibility>().notNull().default("private"),
+    visibility: text("visibility").$type<DocumentVisibility>().notNull().default("unlisted"),
     shareId: text("share_id").notNull(),
     currentMarkdown: text("current_markdown").notNull().default(""),
     createdAt: timestamp("created_at"),

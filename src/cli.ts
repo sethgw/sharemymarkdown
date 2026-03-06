@@ -383,7 +383,7 @@ const createDoc = async (input: string[]) => {
   const parsed = parseCliArgs(input);
   const config = await readLocalCliConfig();
   const title = getOptionString(parsed, ["title", "t"]) ?? parsed.positionals.join(" ");
-  const visibility = parseVisibility(getOptionString(parsed, ["visibility", "v"]), config.defaultVisibility ?? "private");
+  const visibility = parseVisibility(getOptionString(parsed, ["visibility", "v"]), config.defaultVisibility ?? "unlisted");
   const document = await apiFetch<DocumentDetail>("/api/documents", {
     method: "POST",
     body: JSON.stringify({ title, visibility }),
@@ -442,7 +442,7 @@ const shareDocumentCli = async (input: string[]) => {
   const parsed = parseCliArgs(input);
   const sourcePath = parsed.positionals[0];
   const config = await readLocalCliConfig();
-  const visibility = parseVisibility(getOptionString(parsed, ["visibility", "v"]), config.defaultVisibility ?? "private");
+  const visibility = parseVisibility(getOptionString(parsed, ["visibility", "v"]), config.defaultVisibility ?? "unlisted");
   const markdown = await loadMarkdownInput(sourcePath);
   const title = deriveTitle(getOptionString(parsed, ["title", "t"]), sourcePath, markdown);
   const document = await apiFetch<DocumentDetail>("/api/documents", {

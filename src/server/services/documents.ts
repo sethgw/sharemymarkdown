@@ -105,7 +105,7 @@ export const createDocument = async (
     id: documentId,
     title: title.trim() || "Untitled document",
     ownerId: userId,
-    visibility: input?.visibility ?? "private",
+    visibility: input?.visibility ?? "unlisted",
     shareId,
     currentMarkdown: input?.markdown ?? "",
     createdAt: now,

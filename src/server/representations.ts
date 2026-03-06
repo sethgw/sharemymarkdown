@@ -37,7 +37,7 @@ export const renderDocumentsMarkdown = (
       [
         `- **${document.title}** \`${document.id}\``,
         `  role: ${document.role ?? "shared-read-only"}`,
-        `  visibility: ${document.visibility ?? "private"}`,
+        `  visibility: ${document.visibility ?? "unlisted"}`,
         `  updated: ${new Date(document.updatedAt).toISOString()}`,
         ...(document.sharePath ? [`  share_path: ${document.sharePath}`] : []),
         ...(document.shareUrl ? [`  share_url: ${document.shareUrl}`] : []),
