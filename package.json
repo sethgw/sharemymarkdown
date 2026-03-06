@@ -1,8 +1,30 @@
 {
   "name": "sharemymarkdown",
   "version": "0.1.0",
-  "private": true,
+  "description": "CLI-first collaborative Markdown with realtime editing, share links, and readable revision workflows.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/sethgw/sharemymarkdown.git"
+  },
+  "homepage": "https://github.com/sethgw/sharemymarkdown#readme",
+  "bugs": {
+    "url": "https://github.com/sethgw/sharemymarkdown/issues"
+  },
   "type": "module",
+  "bin": {
+    "sharemymarkdown": "./bin/sharemymarkdown",
+    "smm": "./bin/smm"
+  },
+  "files": [
+    "bin",
+    "src",
+    "build.ts",
+    "README.md",
+    "AGENTS.md",
+    "llms.txt",
+    "tsconfig.json"
+  ],
   "scripts": {
     "cli": "bun src/cli.ts",
     "mcp": "bun src/mcp.ts",

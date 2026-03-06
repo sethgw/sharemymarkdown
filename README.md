@@ -1,6 +1,6 @@
 # ShareMyMarkdown
 
-CLI-first collaborative Markdown with realtime editing, readable history, and draft-style revision workflows.
+CLI-first collaborative Markdown with realtime editing, stable share links, readable history, and draft-style revision workflows.
 
 If you are an agent or operator landing in this repo, the practical rule is simple:
 
@@ -14,7 +14,9 @@ Canonical agent guidance lives in [AGENTS.md](AGENTS.md). [CLAUDE.md](CLAUDE.md)
 
 Use ShareMyMarkdown when you want to:
 
+- turn local Markdown into a durable share link instead of pasting drafts around
 - write Markdown collaboratively without giving up plain text
+- control whether a document is private, unlisted, or public
 - keep explicit versions for meaningful checkpoints
 - create isolated revisions before changing the live document
 - let agents interact with the same document system through MCP
@@ -68,40 +70,69 @@ Then open:
 http://localhost:3000
 ```
 
+Local CLI during repo development:
+
+```bash
+bun run cli -- help
+```
+
+Published CLI shape:
+
+```bash
+bunx sharemymarkdown share draft.md --visibility unlisted
+bun add -g sharemymarkdown
+smm share draft.md --visibility unlisted
+```
+
 ## First Useful Commands
 
 Sign in from the CLI:
 
 ```bash
-bun run cli auth login
+sharemymarkdown auth login
 ```
 
-Create and edit a document:
+Create a link from a file or stdin:
 
 ```bash
-bun run cli docs create "Working Draft"
-bun run cli docs edit <document-id>
+sharemymarkdown share draft.md --visibility unlisted
+cat draft.md | smm share --title "Working Draft"
+```
+
+Open and edit an existing document:
+
+```bash
+sharemymarkdown docs get <document-id>
+sharemymarkdown docs edit <document-id>
+sharemymarkdown docs visibility <document-id> public
 ```
 
 Save a version:
 
 ```bash
-bun run cli versions save <document-id> "Initial checkpoint"
+sharemymarkdown versions save <document-id> "Initial checkpoint"
 ```
 
 Create and review a revision:
 
 ```bash
-bun run cli revisions create <document-id> "Alternative draft"
-bun run cli revisions edit <document-id> <revision-id>
-bun run cli revisions diff <document-id> <revision-id> live
-bun run cli revisions apply <document-id> <revision-id>
+sharemymarkdown revisions create <document-id> "Alternative draft"
+sharemymarkdown revisions edit <document-id> <revision-id>
+sharemymarkdown revisions diff <document-id> <revision-id> live
+sharemymarkdown revisions apply <document-id> <revision-id>
+```
+
+Set a default visibility for future shares:
+
+```bash
+sharemymarkdown config set default-visibility unlisted
+sharemymarkdown config show
 ```
 
 See all CLI commands:
 
 ```bash
-bun run cli help
+sharemymarkdown help
 ```
 
 ## MCP
@@ -131,6 +162,7 @@ High-value endpoints:
 
 - `/api/documents`
 - `/api/documents/:id`
+- `/api/shared/:shareId`
 - `/api/documents/:id/presence`
 - `/api/documents/:id/versions`
 - `/api/documents/:id/revisions`
@@ -143,6 +175,7 @@ High-value endpoints:
 
 - GitHub is the first auth provider.
 - Use one GitHub OAuth app for local and a separate one for production.
+- CLI defaults live in `~/.config/sharemymarkdown/config.json`.
 - `db:push` can hit Turso transaction issues when it tries to recreate existing auth tables. The app also runs `ensureDatabase()` on startup to create missing tables safely.
 
 ## Reference

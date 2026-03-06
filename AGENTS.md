@@ -42,6 +42,8 @@ Do not invent product behavior only inside React components or HTTP handlers.
 - Auth via GitHub
 - CLI login bridge
 - Document list/create/read/edit
+- Share-link creation from CLI, MCP, and web
+- Document visibility: `private`, `unlisted`, `public`
 - Realtime collaborative editing in web
 - Presence
 - Versions: save, list, diff, restore
@@ -53,10 +55,18 @@ Do not invent product behavior only inside React components or HTTP handlers.
 
 ```bash
 bun install
-bun run cli help
+bun run cli -- help
 bun dev
 bun run build
 bun run mcp
+```
+
+Binary shape after publish:
+
+```bash
+bunx sharemymarkdown share draft.md --visibility unlisted
+bun add -g sharemymarkdown
+smm share draft.md --visibility unlisted
 ```
 
 Database helpers:
@@ -74,6 +84,7 @@ Note: `db:push` can hit Turso transaction issues when it tries to recreate exist
 - `TURSO_TOKEN` or `TURSO_AUTH_TOKEN` or `TURBO_TOKEN`
 - `BETTER_AUTH_SECRET`
 - `BETTER_AUTH_URL`
+- `SMM_SERVER_URL`
 - `GITHUB_CLIENT_ID`
 - `GITHUB_CLIENT_SECRET`
 
@@ -87,6 +98,7 @@ http://localhost:3000/api/auth/callback/github
 
 - Prefer Bun-native workflows over Node/Vite alternatives.
 - Keep CLI, MCP, and web capability parity aligned.
+- Keep share-link and visibility semantics aligned across all three surfaces.
 - Treat Yjs as the source of truth for live editor state.
 - Treat HTTP services and DB records as the source of truth for revisions, versions, sharing, and auth.
 - Prefer markdown and text representations when building agent-facing output.
@@ -104,6 +116,7 @@ High-value routes:
 
 - `/api/documents`
 - `/api/documents/:id`
+- `/api/shared/:shareId`
 - `/api/documents/:id/presence`
 - `/api/documents/:id/versions`
 - `/api/documents/:id/revisions`

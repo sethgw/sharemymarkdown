@@ -63,6 +63,13 @@ export const capabilityCatalog: Capability[] = [
     surfaces: ["cli", "mcp", "web"],
   },
   {
+    id: "documents.share",
+    group: "documents",
+    title: "Create share link",
+    description: "Create a document from Markdown and return a stable share URL.",
+    surfaces: ["cli", "mcp", "web"],
+  },
+  {
     id: "versions.list",
     group: "versions",
     title: "List versions",
@@ -130,6 +137,13 @@ export const capabilityCatalog: Capability[] = [
     group: "sharing",
     title: "List members",
     description: "Inspect the collaborators and roles on a document.",
+    surfaces: ["cli", "mcp", "web"],
+  },
+  {
+    id: "sharing.visibility",
+    group: "sharing",
+    title: "Set visibility",
+    description: "Change whether a document is private, unlisted, or public.",
     surfaces: ["cli", "mcp", "web"],
   },
   {

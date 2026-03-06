@@ -5,7 +5,7 @@ import * as z from "zod/v4";
 import { listDocumentPresence } from "@/server/collaboration";
 import { apiFetch, readSessionToken } from "@/local/client";
 import { db } from "@/server/db/client";
-import { user } from "@/server/db/schema";
+import { type DocumentVisibility, user } from "@/server/db/schema";
 import {
   createDocument,
   createVersion,
@@ -54,6 +54,10 @@ type DocumentSummary = {
   title: string;
   role: string;
   updatedAt: string;
+  visibility: DocumentVisibility;
+  shareId: string;
+  sharePath: string;
+  shareUrl?: string;
 };
 
 type DocumentDetail = {
@@ -62,6 +66,10 @@ type DocumentDetail = {
   role: string;
   currentMarkdown: string;
   updatedAt: string;
+  visibility: DocumentVisibility;
+  shareId: string;
+  sharePath: string;
+  shareUrl?: string;
 };
 
 type VersionSummary = {
@@ -105,9 +113,9 @@ type RevisionDetail = RevisionSummary & {
 type McpBackend = {
   authStatus: () => Promise<AuthStatusResult>;
   listDocuments: () => Promise<DocumentSummary[]>;
-  createDocument: (title?: string) => Promise<DocumentDetail>;
+  createDocument: (input?: { title?: string; markdown?: string; visibility?: DocumentVisibility }) => Promise<DocumentDetail>;
   getDocument: (documentId: string) => Promise<DocumentDetail>;
-  updateDocument: (documentId: string, input: { title?: string; markdown?: string }) => Promise<DocumentDetail>;
+  updateDocument: (documentId: string, input: { title?: string; markdown?: string; visibility?: DocumentVisibility }) => Promise<DocumentDetail>;
   listPresence: (documentId: string) => Promise<PresenceSummary[]>;
   listVersions: (documentId: string) => Promise<VersionSummary[]>;
   saveVersion: (documentId: string, message?: string) => Promise<{ versionId: string }>;
@@ -138,7 +146,7 @@ const asStructured = <T,>(text: string, structuredContent: T) => ({
 const requireLocalToken = async () => {
   const token = await readSessionToken();
   if (!token) {
-    throw new Error("No CLI session token found. Run `bun run cli auth login` first.");
+    throw new Error("No CLI session token found. Run `sharemymarkdown auth login` first.");
   }
 };
 
@@ -160,7 +168,9 @@ const getRemoteAuth = (extra: ToolExtra) => {
 const formatDocumentList = (documents: DocumentSummary[]) => {
   return documents.length === 0
     ? "No documents"
-    : documents.map(document => `${document.id}  ${document.title}  [${document.role}]  ${document.updatedAt}`).join("\n");
+    : documents
+        .map(document => `${document.id}  ${document.title}  [${document.role}/${document.visibility}]  ${document.updatedAt}  ${document.shareUrl ?? document.sharePath}`)
+        .join("\n");
 };
 
 const formatVersionList = (versions: VersionSummary[]) => {
@@ -193,10 +203,10 @@ export const createLocalMcpBackend: BackendFactory = async () => {
         session: response.session,
       })),
     listDocuments: () => apiFetch<DocumentSummary[]>("/api/documents"),
-    createDocument: title =>
+    createDocument: input =>
       apiFetch<DocumentDetail>("/api/documents", {
         method: "POST",
-        body: JSON.stringify({ title }),
+        body: JSON.stringify(input ?? {}),
       }),
     getDocument: documentId => apiFetch<DocumentDetail>(`/api/documents/${documentId}`),
     updateDocument: (documentId, input) =>
@@ -281,10 +291,16 @@ export const createRemoteMcpBackend: BackendFactory = async extra => {
         title: document.title,
         role: document.role,
         updatedAt: document.updatedAt.toISOString(),
+        visibility: document.visibility,
+        shareId: document.shareId,
+        sharePath: document.sharePath,
       }));
     },
-    createDocument: async title => {
-      const documentId = await createDocument(auth.userId, title ?? "");
+    createDocument: async input => {
+      const documentId = await createDocument(auth.userId, input?.title ?? "", {
+        markdown: input?.markdown,
+        visibility: input?.visibility,
+      });
       const document = await getDocument(auth.userId, documentId);
       return {
         id: document.id,
@@ -292,6 +308,9 @@ export const createRemoteMcpBackend: BackendFactory = async extra => {
         role: document.role,
         currentMarkdown: document.currentMarkdown,
         updatedAt: document.updatedAt.toISOString(),
+        visibility: document.visibility,
+        shareId: document.shareId,
+        sharePath: document.sharePath,
       };
     },
     getDocument: async documentId => {
@@ -302,6 +321,9 @@ export const createRemoteMcpBackend: BackendFactory = async extra => {
         role: document.role,
         currentMarkdown: document.currentMarkdown,
         updatedAt: document.updatedAt.toISOString(),
+        visibility: document.visibility,
+        shareId: document.shareId,
+        sharePath: document.sharePath,
       };
     },
     updateDocument: async (documentId, input) => {
@@ -312,6 +334,9 @@ export const createRemoteMcpBackend: BackendFactory = async extra => {
         role: document.role,
         currentMarkdown: document.currentMarkdown,
         updatedAt: document.updatedAt.toISOString(),
+        visibility: document.visibility,
+        shareId: document.shareId,
+        sharePath: document.sharePath,
       };
     },
     listPresence: documentId => listDocumentPresence(documentId),
@@ -416,12 +441,14 @@ export const createAppMcpServer = (getBackend: BackendFactory) => {
       description: "Create a new Markdown document.",
       inputSchema: {
         title: z.string().optional().describe("Optional title for the document."),
+        markdown: z.string().optional().describe("Optional initial Markdown content."),
+        visibility: z.enum(["private", "unlisted", "public"]).optional().describe("Initial document visibility."),
       },
     },
-    async ({ title }, extra) => {
+    async ({ title, markdown, visibility }, extra) => {
       const backend = await getBackend(extra);
-      const document = await backend.createDocument(title);
-      return asStructured(`Created ${document.title} (${document.id})`, { document });
+      const document = await backend.createDocument({ title, markdown, visibility });
+      return asStructured(`Created ${document.title} (${document.id}) ${document.shareUrl ?? document.sharePath}`, { document });
     },
   );
 
@@ -450,11 +477,12 @@ export const createAppMcpServer = (getBackend: BackendFactory) => {
         documentId: z.string().describe("The document id."),
         title: z.string().optional().describe("Updated title."),
         markdown: z.string().optional().describe("Updated Markdown content."),
+        visibility: z.enum(["private", "unlisted", "public"]).optional().describe("Updated document visibility."),
       },
     },
-    async ({ documentId, title, markdown }, extra) => {
+    async ({ documentId, title, markdown, visibility }, extra) => {
       const backend = await getBackend(extra);
-      const document = await backend.updateDocument(documentId, { title, markdown });
+      const document = await backend.updateDocument(documentId, { title, markdown, visibility });
       return asStructured(`Updated ${document.title}`, { document });
     },
   );
