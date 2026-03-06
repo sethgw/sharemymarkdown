@@ -9,7 +9,7 @@ export const env = {
   port: parsePort(process.env.PORT),
   appUrl: process.env.BETTER_AUTH_URL ?? `http://localhost:${parsePort(process.env.PORT)}`,
   databaseUrl: process.env.DATABASE_URL ?? "file:sharemymarkdown.db",
-  tursoAuthToken: process.env.TURSO_AUTH_TOKEN ?? process.env.TURSO_TOKEN ?? process.env.TURBO_TOKEN ?? undefined,
+  tursoAuthToken: process.env.TURSO_AUTH_TOKEN || process.env.TURSO_TOKEN || process.env.TURBO_TOKEN || undefined,
   betterAuthSecret:
     process.env.BETTER_AUTH_SECRET ?? "development-secret-change-me-please-set-a-real-secret",
   githubClientId: process.env.GITHUB_CLIENT_ID,

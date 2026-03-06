@@ -1,7 +1,7 @@
 import { defineConfig } from "drizzle-kit";
 
 const databaseUrl = process.env.DATABASE_URL ?? "file:sharemymarkdown.db";
-const authToken = process.env.TURSO_AUTH_TOKEN ?? process.env.TURSO_TOKEN;
+const authToken = process.env.TURSO_AUTH_TOKEN || process.env.TURSO_TOKEN;
 const isTurso = databaseUrl.startsWith("libsql://");
 
 export default defineConfig(
