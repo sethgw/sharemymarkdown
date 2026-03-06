@@ -1,4 +1,4 @@
-import { FileText, LogOut, Plus, SquareTerminal } from "lucide-react";
+import { FileText, LogOut, SquareTerminal, Terminal } from "lucide-react";
 
 import {
   Sidebar,
@@ -32,13 +32,11 @@ export function AppSidebar({
   documents,
   activeDocumentId,
   user,
-  onCreateDocument,
   ...props
 }: {
   documents: SidebarDocument[];
   activeDocumentId?: string | null;
   user: SidebarUser | null;
-  onCreateDocument: () => void;
 } & React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
@@ -77,7 +75,10 @@ export function AppSidebar({
                 </SidebarMenuItem>
               ))}
               {documents.length === 0 && (
-                <p className="px-2 py-4 text-xs text-muted-foreground">No documents yet.</p>
+                <div className="px-2 py-4 text-xs text-muted-foreground">
+                  <p>No documents yet.</p>
+                  <p className="mt-1">Use the CLI or MCP to create documents.</p>
+                </div>
               )}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -86,9 +87,11 @@ export function AppSidebar({
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={onCreateDocument}>
-              <Plus />
-              New document
+            <SidebarMenuButton asChild>
+              <a href="https://www.npmjs.com/package/sharemymarkdown" target="_blank" rel="noopener noreferrer">
+                <Terminal />
+                Get the CLI
+              </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
           {user && (

@@ -33,6 +33,7 @@ Agent discovery:
 - `/.well-known/agents.json` - machine-readable agent capabilities and endpoints
 - `/.well-known/oauth-authorization-server` - MCP/OAuth discovery
 - `/.well-known/oauth-protected-resource` - protected resource metadata
+- `/openapi.yaml` - OpenAPI 3.1 spec
 - `/llms.txt` - this file
 - `/mcp` - MCP tool endpoint
 

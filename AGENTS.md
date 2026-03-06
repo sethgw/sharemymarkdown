@@ -167,4 +167,5 @@ Machine-readable summary:
 - `/.well-known/agents.json`: machine-readable agent capabilities
 - `/.well-known/oauth-authorization-server`: MCP/OAuth discovery
 - `/.well-known/oauth-protected-resource`: protected resource metadata
+- `/openapi.yaml`: OpenAPI 3.1 spec for all HTTP endpoints
 - `/llms.txt`: machine-readable repo and product summary

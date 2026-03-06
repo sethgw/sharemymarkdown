@@ -56,6 +56,7 @@ import index from "./index.html";
 await ensureDatabase();
 
 const llmsFile = Bun.file(new URL("../llms.txt", import.meta.url));
+const openapiFile = Bun.file(new URL("../openapi.yaml", import.meta.url));
 const distDir = new URL("../dist", import.meta.url).pathname;
 
 const serveDistFile = (pathname: string) => {
@@ -279,6 +280,7 @@ const server = serve<CollaborationSocketData>({
           },
           discovery: {
             llms_txt: `${getBaseUrl(request)}/llms.txt`,
+            openapi: `${getBaseUrl(request)}/openapi.yaml`,
             agents_md: "https://github.com/sethgw/sharemymarkdown/blob/master/AGENTS.md",
             architecture: "https://github.com/sethgw/sharemymarkdown/blob/master/docs/architecture.md",
           },
@@ -303,6 +305,15 @@ const server = serve<CollaborationSocketData>({
 
       if (pathname === "/.well-known/oauth-protected-resource") {
         return handleMcpProtectedResource(request);
+      }
+
+      if (pathname === "/api/openapi.yaml" || pathname === "/openapi.yaml") {
+        return new Response(openapiFile, {
+          headers: {
+            "content-type": "text/yaml; charset=utf-8",
+            "cache-control": "public, max-age=300",
+          },
+        });
       }
 
       if (pathname === "/api/health") {

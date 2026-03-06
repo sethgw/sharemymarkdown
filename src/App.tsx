@@ -170,126 +170,169 @@ const useCurrentPath = () => {
 // Landing (standalone, no sidebar)
 // ---------------------------------------------------------------------------
 
-function Landing({ session }: { session: SessionPayload }) {
+function TerminalWindow({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-6xl flex-col justify-center gap-10 px-6 py-12">
-      <div className="space-y-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-600">Markdown for teams and agents</p>
-        <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
-          One document. Many collaborators. Humans and agents together.
+    <div className="overflow-hidden rounded-xl border border-stone-800 bg-stone-950 shadow-2xl">
+      <div className="flex items-center gap-2 border-b border-stone-800 px-4 py-2.5">
+        <div className="flex gap-1.5">
+          <div className="size-3 rounded-full bg-stone-700" />
+          <div className="size-3 rounded-full bg-stone-700" />
+          <div className="size-3 rounded-full bg-stone-700" />
+        </div>
+        <span className="ml-2 text-xs text-stone-500">{title}</span>
+      </div>
+      <div className="p-4">{children}</div>
+    </div>
+  );
+}
+
+function Landing({ session }: { session: SessionPayload }) {
+  const mcpConfigJson = JSON.stringify(
+    {
+      mcpServers: {
+        sharemymarkdown: {
+          url: "https://sharemymarkdown.com/mcp",
+        },
+      },
+    },
+    null,
+    2,
+  );
+
+  return (
+    <div className="mx-auto flex min-h-screen w-full max-w-5xl flex-col gap-20 px-6 py-16">
+      {/* Hero */}
+      <div className="space-y-6 text-center">
+        <p className="text-sm font-semibold uppercase tracking-[0.24em] text-stone-500">Markdown for teams and agents</p>
+        <h1 className="mx-auto max-w-3xl text-5xl font-semibold tracking-tight text-stone-900 sm:text-6xl">
+          Share markdown from anywhere
         </h1>
-        <p className="max-w-2xl text-lg leading-8 text-stone-600">
-          Share Markdown between people, teams, and AI agents. Everyone edits the same document in realtime — from a browser, a CLI, or an MCP-connected agent.
+        <p className="mx-auto max-w-2xl text-lg leading-8 text-stone-600">
+          One document, many surfaces. Use it from an agent, a terminal, an MCP client, or a browser.
         </p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.3fr)_22rem] lg:items-start">
-        <Card className="border-stone-200/80 bg-white/85 backdrop-blur">
-          <CardHeader>
-            <CardTitle>Collaborative Markdown for humans and agents</CardTitle>
-            <CardDescription>
-              A shared workspace where people, teams, and AI agents co-author Markdown in realtime — from any surface.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Multi-surface access</p>
-                <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Work from the browser, CLI, or MCP. Agents and humans share the same documents and the same realtime session.
-                </p>
+      {/* Four surfaces */}
+      <div className="grid gap-8 md:grid-cols-2">
+        {/* 1. AI Agents / TUIs */}
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">AI Agents</p>
+            <p className="mt-1 text-sm text-stone-600">
+              Any agent with tool use can share markdown. Works in Claude Code, Cursor, Windsurf, and any TUI that supports skills.
+            </p>
+          </div>
+          <TerminalWindow title="claude-code">
+            <div className="space-y-3 font-mono text-sm leading-relaxed">
+              <div>
+                <span className="text-stone-500">{">"}</span>{" "}
+                <span className="text-stone-100">share the plan with the team</span>
               </div>
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Shareable by default</p>
-                <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Every document gets a link. Share it with a teammate, an agent, or the world — you control the visibility.
-                </p>
+              <div className="text-stone-400">
+                Using /smm skill to share markdown...
               </div>
-              <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4">
-                <p className="text-sm font-semibold text-stone-900">Realtime co-editing</p>
-                <p className="mt-2 text-sm leading-6 text-stone-600">
-                  Multiple cursors, live presence, and version history. People and agents edit side by side with full visibility.
-                </p>
+              <div className="space-y-1 text-stone-400">
+                <div>
+                  <span className="text-emerald-400">$</span> smm share --title &quot;Q2 Roadmap&quot; --visibility unlisted
+                </div>
+                <div className="text-stone-100">https://sharemymarkdown.com/d/a8f3e2b1c4d9</div>
+              </div>
+              <div className="text-stone-400">
+                Shared. Link copied to clipboard.
               </div>
             </div>
+          </TerminalWindow>
+        </div>
 
-            <div className="rounded-[1.4rem] border border-stone-200 bg-[#fffdf8] p-5">
-              <p className="text-xs uppercase tracking-[0.18em] text-stone-500">How It Works</p>
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
-                <div>
-                  <p className="text-sm font-semibold text-stone-900">1. Create a document</p>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">
-                    From the browser, the CLI, or an MCP-connected agent. One command, one link.
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-stone-900">2. Invite collaborators</p>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Share the link with teammates or give an agent access. Everyone joins the same live session.
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-stone-900">3. Edit together</p>
-                  <p className="mt-2 text-sm leading-6 text-stone-600">
-                    Co-author in realtime. Save versions, propose revisions, and diff changes — all tracked.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-[1.4rem] border border-stone-200 bg-stone-950 px-5 py-4 text-stone-100">
-              <p className="text-xs uppercase tracking-[0.18em] text-stone-400">CLI Quick Start</p>
-              <pre className="mt-3 overflow-x-auto text-sm leading-7 text-stone-100">{`$ bun add -g @sharemymarkdown/smm
+        {/* 2. CLI */}
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">CLI</p>
+            <p className="mt-1 text-sm text-stone-600">
+              Share files, pipe from stdin, manage documents, versions, and revisions — all from the terminal.
+            </p>
+          </div>
+          <TerminalWindow title="terminal">
+            <pre className="overflow-x-auto font-mono text-sm leading-relaxed text-stone-100">{`$ bun add -g @sharemymarkdown/smm
 
 $ smm share draft.md --visibility unlisted
-https://sharemymarkdown.com/s/abc123
+https://sharemymarkdown.com/d/a8f3e2b1c4d9
 
-$ smm docs list
+$ git log --oneline -10 | smm share --title "Commits"
+https://sharemymarkdown.com/d/7b2c9e4f1a08
+
 $ smm versions save <id> "first draft"
-$ smm revisions create <id> "Fix intro"`}</pre>
-            </div>
-          </CardContent>
-        </Card>
+Saved version v_3f8a1b2c`}</pre>
+          </TerminalWindow>
+        </div>
 
-        <Card className="border-stone-200/80 bg-white/92 shadow-[0_20px_60px_rgba(28,25,23,0.08)]">
-          <CardHeader>
-            <CardTitle className="text-stone-950">{session.user ? `Welcome back, ${session.user.name}` : "Sign in to collaborate"}</CardTitle>
-            <CardDescription className="text-stone-600">
-              {session.githubConfigured
-                ? "Sign in with GitHub to create, share, and co-edit documents."
-                : "GitHub auth is not configured yet."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-6 text-stone-600">
-              {session.user
-                ? "Your documents are accessible from the browser, CLI, and any MCP-connected agent."
-                : "One account across every surface — browser, CLI, and MCP. Collaborate with people and agents alike."}
-            </div>
-            {session.user ? (
-              <>
-                <Button className="h-11 w-full bg-stone-950 text-white hover:bg-stone-800" onClick={() => window.location.assign("/dashboard")}>
-                  Open dashboard
-                </Button>
-                <Button
-                  className="h-11 w-full border-stone-300 bg-white text-stone-900 hover:bg-stone-100"
-                  variant="outline"
-                  onClick={() => window.location.assign("/auth/signout?callback=/")}
-                >
-                  Sign out
-                </Button>
-              </>
-            ) : (
-              <Button
-                className="h-11 w-full bg-stone-950 text-white hover:bg-stone-800"
-                disabled={!session.githubConfigured}
-                onClick={() => window.location.assign("/auth/github?callback=/dashboard")}
-              >
-                Continue with GitHub
-              </Button>
-            )}
-          </CardContent>
-        </Card>
+        {/* 3. MCP */}
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">MCP</p>
+            <p className="mt-1 text-sm text-stone-600">
+              Connect any MCP client — Claude Desktop, Cursor, or your own tooling. One URL, full access.
+            </p>
+          </div>
+          <TerminalWindow title="mcp-config.json">
+            <pre className="overflow-x-auto font-mono text-sm leading-relaxed text-emerald-400">{mcpConfigJson}</pre>
+          </TerminalWindow>
+          <Button
+            className="w-full bg-stone-900 text-white hover:bg-stone-800"
+            onClick={() => {
+              void navigator.clipboard.writeText(mcpConfigJson);
+            }}
+          >
+            Copy MCP config
+          </Button>
+        </div>
+
+        {/* 4. Humans / Web */}
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Web</p>
+            <p className="mt-1 text-sm text-stone-600">
+              Sign in with GitHub. Create documents, edit in realtime with collaborators, manage versions and sharing.
+            </p>
+          </div>
+          <Card className="border-stone-200/80 bg-white/92 shadow-[0_20px_60px_rgba(28,25,23,0.06)]">
+            <CardContent className="space-y-4 pt-6">
+              {session.user ? (
+                <>
+                  <p className="text-sm text-stone-600">
+                    Signed in as <span className="font-medium text-stone-900">{session.user.name}</span>
+                  </p>
+                  <Button
+                    className="h-11 w-full bg-stone-950 text-white hover:bg-stone-800"
+                    onClick={() => window.location.assign("/dashboard")}
+                  >
+                    Open dashboard
+                  </Button>
+                  <Button
+                    className="h-11 w-full"
+                    variant="outline"
+                    onClick={() => window.location.assign("/auth/signout?callback=/")}
+                  >
+                    Sign out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-stone-200 bg-stone-50 px-4 py-4 text-sm leading-6 text-stone-600">
+                    One account across every surface — browser, CLI, and MCP.
+                  </div>
+                  <Button
+                    className="h-11 w-full bg-stone-950 text-white hover:bg-stone-800"
+                    disabled={!session.githubConfigured}
+                    onClick={() => window.location.assign("/auth/github?callback=/dashboard")}
+                  >
+                    Continue with GitHub
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
@@ -299,25 +342,31 @@ $ smm revisions create <id> "Fix intro"`}</pre>
 // Dashboard content (within sidebar layout)
 // ---------------------------------------------------------------------------
 
-function DashboardContent({ session }: { session: SessionPayload }) {
+function DashboardContent() {
   return (
     <>
       <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
         <SidebarTrigger className="-ml-1" />
         <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbPage>Documents</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
+        <span className="text-sm text-muted-foreground">ShareMyMarkdown</span>
       </header>
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
-        <h2 className="text-2xl font-semibold tracking-tight">Welcome, {session.user?.name}</h2>
-        <p className="max-w-md text-muted-foreground">
-          Select a document from the sidebar or create a new one to get started.
-        </p>
+      <div className="flex flex-1 items-center justify-center p-8">
+        <div className="max-w-md space-y-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            Create and share documents from the CLI or through MCP.
+          </p>
+          <div className="space-y-2 rounded-lg border bg-muted/50 p-4 text-left font-mono text-xs">
+            <p className="text-muted-foreground"># install the CLI</p>
+            <p>bun add -g sharemymarkdown</p>
+            <p className="mt-2 text-muted-foreground"># share a file</p>
+            <p>smm share readme.md</p>
+            <p className="mt-2 text-muted-foreground"># or create a new document</p>
+            <p>smm create "My Document"</p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Documents you create will appear in the sidebar.
+          </p>
+        </div>
       </div>
     </>
   );
@@ -656,8 +705,18 @@ function DocumentContent({
             </span>
           )}
           <span className="hidden text-xs text-muted-foreground lg:block">
-            {document.role} · {document.visibility}
+            {documentStats.words}w · {document.visibility}
           </span>
+          <Button size="sm" variant="ghost" onClick={() => void copyShareUrl()}>
+            Copy link
+          </Button>
+          <Button
+            size="sm"
+            variant={activePanel ? "secondary" : "ghost"}
+            onClick={() => togglePanel(activePanel ?? "versions")}
+          >
+            More
+          </Button>
           {canWrite && (
             <Button size="sm" variant={editMode ? "default" : "outline"} onClick={() => setEditMode(!editMode)}>
               {editMode ? "Close editor" : "Edit"}
@@ -667,30 +726,10 @@ function DocumentContent({
       </header>
 
       {/* Content */}
-      <div className="flex flex-1 flex-col gap-4 overflow-auto p-4 md:p-6">
+      <div className="flex flex-1 flex-col gap-3 overflow-auto p-3 md:px-4 md:py-3">
         {error && (
           <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
         )}
-
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <div className="rounded-xl border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Words</p>
-            <p className="text-lg font-semibold">{documentStats.words}</p>
-          </div>
-          <div className="rounded-xl border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Reading Time</p>
-            <p className="text-lg font-semibold">{documentStats.readingMinutes} min</p>
-          </div>
-          <div className="rounded-xl border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Active</p>
-            <p className="text-lg font-semibold">{presence.length}</p>
-          </div>
-          <div className="rounded-xl border bg-card px-4 py-3">
-            <p className="text-xs text-muted-foreground">Versions</p>
-            <p className="text-lg font-semibold">{versions.length}</p>
-          </div>
-        </div>
 
         {/* Editor panel (when active) */}
         {editMode && (
@@ -735,52 +774,36 @@ function DocumentContent({
         )}
 
         {/* HERO: Rendered markdown viewer */}
-        <Card className="flex-1">
-          <div className="p-6 md:p-8 lg:p-10">
-            <article
-              className="markdown-body prose prose-stone mx-auto max-w-3xl text-[15px] leading-7"
-              dangerouslySetInnerHTML={{ __html: documentPreviewHtml }}
-            />
-            {!editorMarkdown.trim() && (
-              <p className="mx-auto max-w-3xl text-sm text-muted-foreground">
-                This document is empty.{" "}
-                {canWrite && !editMode && (
-                  <button className="underline" onClick={() => setEditMode(true)}>
-                    Open the editor
-                  </button>
-                )}
-              </p>
+        <article
+          className="markdown-body prose prose-stone mx-auto w-full max-w-3xl flex-1 text-[15px] leading-7"
+          dangerouslySetInnerHTML={{ __html: documentPreviewHtml }}
+        />
+        {!editorMarkdown.trim() && (
+          <p className="mx-auto max-w-3xl text-sm text-muted-foreground">
+            This document is empty.{" "}
+            {canWrite && !editMode && (
+              <button className="underline" onClick={() => setEditMode(true)}>
+                Open the editor
+              </button>
             )}
-          </div>
-        </Card>
+          </p>
+        )}
 
-        {/* Panel toggle bar */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Button size="sm" variant="outline" onClick={() => void copyShareUrl()}>
-            Copy link
-          </Button>
-          <Button
-            size="sm"
-            variant={activePanel === "versions" ? "default" : "outline"}
-            onClick={() => togglePanel("versions")}
-          >
-            Versions ({versions.length})
-          </Button>
-          <Button
-            size="sm"
-            variant={activePanel === "revisions" ? "default" : "outline"}
-            onClick={() => togglePanel("revisions")}
-          >
-            Revisions ({revisions.length})
-          </Button>
-          <Button
-            size="sm"
-            variant={activePanel === "sharing" ? "default" : "outline"}
-            onClick={() => togglePanel("sharing")}
-          >
-            Sharing
-          </Button>
-        </div>
+        {/* Panel tabs (when More is active) */}
+        {activePanel && (
+          <div className="flex gap-1 border-b pb-2">
+            {(["versions", "revisions", "sharing"] as const).map((panel) => (
+              <Button
+                key={panel}
+                size="sm"
+                variant={activePanel === panel ? "default" : "ghost"}
+                onClick={() => setActivePanel(panel)}
+              >
+                {panel === "versions" ? `Versions (${versions.length})` : panel === "revisions" ? `Revisions (${revisions.length})` : "Sharing"}
+              </Button>
+            ))}
+          </div>
+        )}
 
         {/* Versions panel */}
         {activePanel === "versions" && (
@@ -1312,20 +1335,19 @@ function AuthenticatedApp({ session, route }: { session: SessionPayload; route: 
   };
 
   useEffect(() => {
-    void loadDocuments();
+    void (async () => {
+      try {
+        const docs = await fetchJson<DocumentSummary[]>("/api/documents");
+        setDocuments(docs);
+        // Auto-navigate to most recent document when on dashboard
+        if (route.type === "dashboard" && docs.length > 0) {
+          window.location.assign(`/documents/${docs[0].id}`);
+        }
+      } catch {
+        // sidebar will show empty
+      }
+    })();
   }, []);
-
-  const createDocument = async () => {
-    try {
-      const doc = await fetchJson<DocumentDetail>("/api/documents", {
-        method: "POST",
-        body: JSON.stringify({ title: "", visibility: "unlisted" }),
-      });
-      window.location.assign(`/documents/${doc.id}`);
-    } catch {
-      // will show error on the new page
-    }
-  };
 
   const activeDocId = route.type === "document" ? route.documentId : null;
 
@@ -1335,10 +1357,9 @@ function AuthenticatedApp({ session, route }: { session: SessionPayload; route: 
         documents={documents}
         activeDocumentId={activeDocId}
         user={session.user}
-        onCreateDocument={() => void createDocument()}
       />
       <SidebarInset>
-        {route.type === "dashboard" && <DashboardContent session={session} />}
+        {route.type === "dashboard" && <DashboardContent />}
         {route.type === "document" && route.documentId && (
           <DocumentContent
             documentId={route.documentId}
@@ -1405,11 +1426,7 @@ export function App() {
   }, [path]);
 
   if (!session) {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-6">
-        <p className="text-sm text-stone-600">Loading ShareMyMarkdown…</p>
-      </div>
-    );
+    return <div className="min-h-screen bg-background" />;
   }
 
   // Standalone pages (no sidebar)

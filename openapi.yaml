@@ -1,0 +1,564 @@
+openapi: 3.1.0
+info:
+  title: ShareMyMarkdown API
+  version: 0.1.1
+  description: CLI-first collaborative Markdown with realtime editing, versions, revisions, and sharing.
+  contact:
+    url: https://github.com/sethgw/sharemymarkdown
+  license:
+    name: MIT
+
+servers:
+  - url: https://sharemymarkdown.com
+    description: Production
+  - url: http://localhost:3000
+    description: Local development
+
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+
+paths:
+  /api/health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: Server status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  githubConfigured: { type: boolean }
+
+  /api/session:
+    get:
+      summary: Current session
+      security: []
+      responses:
+        "200":
+          description: Session and user info
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session:
+                    type: object
+                    nullable: true
+                    properties:
+                      id: { type: string }
+                      userId: { type: string }
+                  user:
+                    $ref: "#/components/schemas/User"
+                  githubConfigured: { type: boolean }
+                  appUrl: { type: string }
+
+  /api/documents:
+    get:
+      summary: List documents
+      description: Returns all documents the authenticated user has access to. Supports markdown output.
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Document list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentSummary"
+            text/markdown:
+              schema: { type: string }
+    post:
+      summary: Create document
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                markdown: { type: string }
+                visibility: { $ref: "#/components/schemas/Visibility" }
+      responses:
+        "201":
+          description: Created document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+
+  /api/documents/{documentId}:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+    get:
+      summary: Get document
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Document with content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+            text/markdown:
+              schema: { type: string }
+    patch:
+      summary: Update document
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                markdown: { type: string }
+                visibility: { $ref: "#/components/schemas/Visibility" }
+      responses:
+        "200":
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+
+  /api/documents/{documentId}/presence:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+    get:
+      summary: List active collaborators
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Presence list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    userId: { type: string }
+                    name: { type: string }
+                    role: { type: string }
+                    connections: { type: integer }
+
+  /api/documents/{documentId}/versions:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+    get:
+      summary: List versions
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Version history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Version"
+    post:
+      summary: Save version
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message: { type: string }
+      responses:
+        "201":
+          description: Created version
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  versionId: { type: string }
+
+  /api/documents/{documentId}/diff:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+    get:
+      summary: Diff two versions
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: { type: string }
+          description: Source version ID
+        - name: to
+          in: query
+          required: true
+          schema: { type: string }
+          description: Target version ID
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Unified diff patch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diff"
+
+  /api/documents/{documentId}/restore/{versionId}:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+      - name: versionId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      summary: Restore version
+      responses:
+        "200":
+          description: Restored document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+
+  /api/documents/{documentId}/revisions:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+    get:
+      summary: List revisions
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Revision list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RevisionSummary"
+    post:
+      summary: Create revision
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                markdown: { type: string }
+      responses:
+        "201":
+          description: Created revision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionSummary"
+
+  /api/documents/{documentId}/revisions/{revisionId}:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+      - $ref: "#/components/parameters/revisionId"
+    get:
+      summary: Get revision
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Revision detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionDetail"
+    patch:
+      summary: Update revision
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string }
+                description: { type: string }
+                markdown: { type: string }
+                status:
+                  type: string
+                  enum: [draft, review]
+      responses:
+        "200":
+          description: Updated revision
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RevisionDetail"
+
+  /api/documents/{documentId}/revisions/{revisionId}/diff:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+      - $ref: "#/components/parameters/revisionId"
+    get:
+      summary: Diff revision against base or live
+      parameters:
+        - name: compare
+          in: query
+          schema:
+            type: string
+            enum: [base, live]
+            default: live
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Unified diff patch
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Diff"
+
+  /api/documents/{documentId}/revisions/{revisionId}/apply:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+      - $ref: "#/components/parameters/revisionId"
+    post:
+      summary: Apply revision to live document
+      responses:
+        "200":
+          description: Updated document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+
+  /api/documents/{documentId}/members:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+    get:
+      summary: List members
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Member list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+    post:
+      summary: Grant access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role:
+                  type: string
+                  enum: [editor, viewer]
+      responses:
+        "200":
+          description: Updated member list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+
+  /api/documents/{documentId}/members/{userId}:
+    parameters:
+      - $ref: "#/components/parameters/documentId"
+      - name: userId
+        in: path
+        required: true
+        schema: { type: string }
+    delete:
+      summary: Revoke access
+      responses:
+        "200":
+          description: Updated member list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+
+  /api/shared/{shareId}:
+    parameters:
+      - name: shareId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Get shared document by share link
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/format"
+      responses:
+        "200":
+          description: Shared document
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+
+  /api/cli-login/start:
+    post:
+      summary: Start CLI login flow
+      security: []
+      responses:
+        "200":
+          description: Login request with browser URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }
+                  url: { type: string, format: uri }
+                  expiresAt: { type: string, format: date-time }
+
+  /api/cli-login/{requestId}:
+    parameters:
+      - name: requestId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      summary: Poll CLI login status
+      security: []
+      responses:
+        "200":
+          description: Login status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [pending, complete]
+                  token: { type: string }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: better-auth.session_token
+
+  parameters:
+    documentId:
+      name: documentId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    revisionId:
+      name: revisionId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    format:
+      name: format
+      in: query
+      description: "Response format. Use 'markdown' or 'md' for text/markdown output."
+      schema:
+        type: string
+        enum: [json, markdown, md]
+
+  schemas:
+    Visibility:
+      type: string
+      enum: [private, unlisted, public]
+
+    User:
+      type: object
+      nullable: true
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        name: { type: string }
+        image: { type: string, nullable: true }
+
+    DocumentSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        role: { type: string, enum: [owner, editor, viewer] }
+        visibility: { $ref: "#/components/schemas/Visibility" }
+        shareId: { type: string }
+        sharePath: { type: string }
+        shareUrl: { type: string, format: uri }
+        updatedAt: { type: string, format: date-time }
+
+    DocumentDetail:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        role: { type: string, enum: [owner, editor, viewer] }
+        ownerId: { type: string }
+        visibility: { $ref: "#/components/schemas/Visibility" }
+        shareId: { type: string }
+        sharePath: { type: string }
+        shareUrl: { type: string, format: uri }
+        currentMarkdown: { type: string }
+        updatedAt: { type: string, format: date-time }
+
+    Version:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        parentVersionId: { type: string, nullable: true }
+        message: { type: string }
+        authorId: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    RevisionSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        status: { type: string, enum: [draft, review, applied] }
+        authorId: { type: string }
+        updatedAt: { type: string, format: date-time }
+
+    RevisionDetail:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [draft, review, applied] }
+        markdown: { type: string }
+        authorId: { type: string }
+        updatedAt: { type: string, format: date-time }
+
+    Diff:
+      type: object
+      properties:
+        patch: { type: string }
+
+    Member:
+      type: object
+      properties:
+        userId: { type: string }
+        name: { type: string }
+        email: { type: string, format: email }
+        role: { type: string, enum: [owner, editor, viewer] }
