@@ -38,8 +38,10 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@better-auth/drizzle-adapter": "^1.5.4",
-    "@better-auth/oauth-provider": "^1.5.4",
+    "@better-auth/cimd": "^1.7.16",
+    "@better-auth/drizzle-adapter": "^1.7.16",
+    "@better-auth/mcp": "^1.7.16",
+    "@better-auth/oauth-provider": "^1.7.16",
     "@codemirror/commands": "^6.10.2",
     "@codemirror/lang-markdown": "^6.5.0",
     "@codemirror/search": "^6.6.0",
@@ -50,7 +52,7 @@
     "@radix-ui/react-label": "^2.1.7",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.3",
-    "better-auth": "^1.5.4",
+    "better-auth": "^1.7.16",
     "bun-plugin-tailwind": "^0.1.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
