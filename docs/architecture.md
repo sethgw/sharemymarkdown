@@ -215,7 +215,7 @@ The first auth milestone should therefore be:
 - validate bearer tokens on MCP requests
 - attach authenticated session context to every tool invocation
 
-The Better Auth MCP helpers such as `withMcpAuth` are still useful at the transport layer, but the durable long-term shape should align with the OAuth provider flow.
+MCP auth runs on `@better-auth/mcp`, which is built on `@better-auth/oauth-provider`: `requireMcpAuth` verifies the JWT access token at the transport layer, and MCP clients register through Client ID Metadata Documents (`@better-auth/cimd`) or dynamic client registration. Users approve each new client on `/mcp/consent`.
 
 ## Folder Layout
 

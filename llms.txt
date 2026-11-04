@@ -52,6 +52,7 @@ Important routes:
 - `/api/collab/:documentId`
 - `/mcp`
 - `/mcp/login`
+- `/mcp/consent`
 
 Markdown representations:
 - Key GET endpoints support markdown output with `Accept: text/markdown`

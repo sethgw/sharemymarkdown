@@ -12,7 +12,7 @@ import {
 } from "@/server/collaboration";
 import { ensureDatabase } from "@/server/db/ensure";
 import { env, githubConfigured } from "@/server/env";
-import { handleMcpDiscovery, handleMcpLogin, handleMcpProtectedResource, handleMcpRequest } from "@/server/mcp";
+import { handleMcpConsent, handleMcpDiscovery, handleMcpLogin, handleMcpProtectedResource, handleMcpRequest } from "@/server/mcp";
 import {
   markdown,
   renderDiffMarkdown,
@@ -295,15 +295,20 @@ const server = serve<CollaborationSocketData>({
         return handleMcpLogin(request);
       }
 
+      if (pathname === "/mcp/consent") {
+        return handleMcpConsent(request);
+      }
+
       if (pathname === "/mcp") {
         return handleMcpRequest(request);
       }
 
-      if (pathname === "/.well-known/oauth-authorization-server") {
+      // RFC 8414 path-inserted form for the /api/auth issuer, plus the root form.
+      if (pathname === "/.well-known/oauth-authorization-server" || pathname === "/.well-known/oauth-authorization-server/api/auth") {
         return handleMcpDiscovery(request);
       }
 
-      if (pathname === "/.well-known/oauth-protected-resource") {
+      if (pathname === "/.well-known/oauth-protected-resource" || pathname === "/.well-known/oauth-protected-resource/mcp") {
         return handleMcpProtectedResource(request);
       }
 
